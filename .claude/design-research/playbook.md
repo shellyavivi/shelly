@@ -6,7 +6,10 @@ Both `logo-explorer` and `brand-identity-explorer` follow this playbook. Read it
 
 ## 1. Decode the messaging hierarchy
 
-The brief arrives as a messaging hierarchy. Normalise it into this table before searching:
+The brief comes from the intake interview (`.claude/design-research/intake.md`), usually saved at
+`inspiration/<project-slug>/brief.md` with a confirmed search plan. Read it in full, and treat the
+search plan, the admired/disliked brands and the reference guidance as binding. Normalise the
+brief into this table before searching:
 
 | Level | Meaning | Example |
 |---|---|---|
@@ -20,7 +23,10 @@ Then turn the hierarchy into a **visual vocabulary**: for each level, list 3–5
 (form, material, light, rhythm, colour temperature, typographic voice). The core idea drives the
 primary form; pillars drive secondary devices; tone drives typography and colour; constraints filter.
 
-If a level is missing, infer it, mark it `(assumed)`, and continue. Never stop to ask.
+Items marked `(open, agent decides)` are yours to decide; state your choice and why. If something
+is still missing (e.g. the agent was launched without the intake), infer it, mark it `(assumed)`,
+and list it under **Open questions** at the end of the report so the user can correct course.
+You can't ask the user mid-run, so keep going.
 
 ## 2. The three directions
 
@@ -141,6 +147,9 @@ _Date · Agent_
 
 ## Recommended next step
 Which direction(s) to sketch first and what to test.
+
+## Open questions
+Assumptions you made, and questions whose answers would change the research.
 
 ## Sources
 Every URL used, grouped by direction.
