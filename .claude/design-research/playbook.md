@@ -69,6 +69,15 @@ Use `WebSearch` + `WebFetch`. Search in several sources per direction; do not le
 Order, Mucho, Base Design, Sagmeister & Walsh, Studio Dumbar, Snøhetta, Lundqvist, Porto Rocha,
 Ragged Edge, Mother Design, Interbrand, Landor, Jones Knowles Ritchie, Manual, Hey Studio.
 
+**Required image sources — every direction must include at least:**
+- **2 Behance projects** (behance.net/gallery/...), preferably from curated galleries or featured work.
+- **2 big-studio case studies** (Pentagram, Collins, Koto, Porto Rocha, Wolff Olins, DesignStudio,
+  Mucho, Base Design, Order, Studio Dumbar, Snøhetta, Landor, JKR…), linking to the studio's own page.
+- **2–3 Pinterest pins**: individual pin URLs (pinterest.com/pin/...), found with `WebSearch`
+  (e.g. `site:pinterest.com/pin <query>`). Pinterest pages often block fetching. In that case, cite a
+  pin only if the search result clearly shows what it is, and say it couldn't be fetched. Where you
+  can, trace the pin back to its original source and cite that as well.
+
 **Outside design (required for every direction)**
 - **Photography** — named photographers and series (e.g. Wolfgang Tillmans, Hiroshi Sugimoto, Saul
   Leiter, Rinko Kawauchi, Andreas Gursky, Bernd & Hilla Becher, Vivian Maier).
@@ -103,6 +112,11 @@ are preferred sources for non-design references.
 - Write a 1-line "why these belong together" for each direction.
 - Across directions, references should *not* overlap.
 
+**Visual.** The report must show images, not only links. Embed each reference's image as
+`![short caption](direct image URL)` using the page's `og:image` or the CDN URL
+(`mir-s3-cdn-cf.behance.net`, `i.pinimg.com`, the studio's own image host), followed by the source link.
+Only embed images you've viewed and approved.
+
 ## 5. Output
 
 Save the report as Markdown to:
@@ -124,6 +138,7 @@ _Date · Agent_
 
 ### Hero reference
 ### Brand references (3–5)       — name · studio/agency · year · link · what to take from it
+### Behance (2+) · Studio case studies (2+) · Pinterest (2–3) — embedded image · source · what to take
 ### Photography (1–2)            — photographer · series/work · link · what to take
 ### Architecture (1–2)           — building · architect · link · what to take
 ### Art (1–2)                    — artist · work · link · what to take
