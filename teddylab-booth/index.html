@@ -1,0 +1,363 @@
+<title>Teddy Lab Booth 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: full-bleed 3D stage, element/color panel docked right (bottom sheet on phones) */
+:root {
+  --bg: #ecebe8;
+  --panel: #fbfaf8;
+  --fg: #23221f;
+  --muted: #6f6c66;
+  --line: #dcd9d3;
+  --accent: #2f6fb3;
+  --accent-soft: #e2ecf7;
+  --scene: #e6e4e0;
+  --font: 'Rubik', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1b1c1e; --panel: #232427; --fg: #ecebe8; --muted: #a09d97; --line: #37383c;
+  --accent: #79aee6; --accent-soft: #2a3644; --scene: #2a2b2e; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #1b1c1e; --panel: #232427; --fg: #ecebe8; --muted: #a09d97; --line: #37383c;
+  --accent: #79aee6; --accent-soft: #2a3644; --scene: #2a2b2e; color-scheme: dark }
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); overflow: hidden; }
+.app { display: grid; grid-template-columns: minmax(0,1fr) 340px; height: 100%; }
+.stage { position: relative; min-width: 0; }
+#c { display: block; width: 100%; height: 100%; touch-action: none; }
+.views { position: absolute; top: 12px; left: max(12px, env(safe-area-inset-left, 0px)); display: flex; gap: 6px; flex-wrap: wrap; }
+.btn { font: 500 13px var(--font); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 11px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.on { background: var(--accent-soft); border-color: var(--accent); }
+.hint { position: absolute; bottom: 10px; left: max(12px, env(safe-area-inset-left, 0px)); font-size: 12px; color: var(--muted); background: var(--panel); padding: 5px 9px; border-radius: 6px; border: 1px solid var(--line); }
+
+.panel { background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; direction: rtl; }
+.head { padding: 16px 16px 10px; border-bottom: 1px solid var(--line); display: grid; gap: 4px; }
+.head h1 { font-size: 17px; font-weight: 700; margin: 0; }
+.head p { margin: 0; font-size: 12px; color: var(--muted); }
+.list { overflow-y: auto; padding: 6px 8px 12px; flex: 1; min-height: 0; }
+.group { font-size: 11px; letter-spacing: .06em; color: var(--muted); padding: 12px 8px 4px; }
+.row { display: grid; grid-template-columns: 34px minmax(0,1fr) 78px; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px; border: 1px solid transparent; }
+.row.sel { background: var(--accent-soft); border-color: var(--accent); }
+.row input[type=color] { width: 34px; height: 34px; padding: 0; border: 1px solid var(--line); border-radius: 7px; background: none; cursor: pointer; }
+.row input[type=color]::-webkit-color-swatch-wrapper { padding: 2px; }
+.row input[type=color]::-webkit-color-swatch { border: none; border-radius: 5px; }
+.name { min-width: 0; cursor: pointer; }
+.name b { display: block; font-size: 14px; font-weight: 500; }
+.name span { display: block; font-size: 11px; color: var(--muted); direction: ltr; text-align: right; font-variant-numeric: tabular-nums; }
+.hex { width: 78px; font: 13px ui-monospace, Menlo, monospace; direction: ltr; text-align: center; padding: 6px 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); text-transform: uppercase; }
+.op { grid-column: 2 / 4; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.op input { flex: 1; min-width: 0; }
+.foot { border-top: 1px solid var(--line); padding: 10px 12px; display: grid; gap: 8px; }
+.allrow { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.allrow input[type=color] { width: 30px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 6px; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.actions .btn { flex: 1; }
+.toast { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+textarea#out { width: 100%; height: 90px; font: 12px ui-monospace, monospace; direction: ltr; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; }
+
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 52% 48%; }
+  .panel { border-left: none; border-top: 1px solid var(--line); }
+}
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+
+<div class="app">
+  <div class="stage">
+    <canvas id="c"></canvas>
+    <div class="views">
+      <button class="btn" data-view="persp">3D</button>
+      <button class="btn" data-view="front">חזית</button>
+      <button class="btn" data-view="top">תוכנית</button>
+      <button class="btn" data-view="side">צד</button>
+    </div>
+    <div class="hint">גרירה לסיבוב · גלגלת לזום · לחיצה על אלמנט לבחירה</div>
+  </div>
+
+  <aside class="panel">
+    <div class="head">
+      <h1>Teddy Lab · צבעי אלמנטים</h1>
+      <p>מתחם 500×250 ס״מ. לחצו על אלמנט במודל או ברשימה ובחרו צבע.</p>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="foot">
+      <div class="allrow"><input type="color" id="allColor" value="#d4d2ce" aria-label="צבע לכל האלמנטים"><label for="allColor">צבע אחד לכל האלמנטים</label></div>
+      <div class="actions">
+        <button class="btn" id="copy">העתק צבעים</button>
+        <button class="btn" id="reset">איפוס</button>
+      </div>
+      <textarea id="out" readonly hidden aria-label="רשימת צבעים"></textarea>
+    </div>
+  </aside>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const DEFAULT = '#d4d2ce';
+const STORE = 'teddylab-booth-colors-v1';
+
+// Units: cm. Plan coords: x 0..500 (left→right as on plan), y 0..250 (back→front / mall side).
+// World: X = x-250, Z = y-125, Y = up.
+const W = (x) => x - 250, Z = (y) => y - 125;
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NoToneMapping;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 1, 5000);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI / 2 - 0.02;
+controls.minDistance = 120; controls.maxDistance = 2000;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0xb9b5ad, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(-260, 520, 420);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -420, right: 420, top: 420, bottom: -420, near: 10, far: 1500 });
+sun.shadow.bias = -0.0005;
+scene.add(sun);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -0.1; ground.receiveShadow = true;
+scene.add(ground);
+
+// ---------- element registry ----------
+const elements = [];
+const byId = {};
+function el(id, he, group, dims, opts = {}) {
+  const mat = new THREE.MeshStandardMaterial({ color: DEFAULT, roughness: 0.65, metalness: 0, side: opts.double ? THREE.DoubleSide : THREE.FrontSide });
+  const g = new THREE.Group(); g.userData.elId = id; scene.add(g);
+  const e = { id, he, group, dims, mat, g, opacity: opts.opacity || false };
+  elements.push(e); byId[id] = e; return e;
+}
+function add(e, geo, x, y, z, rot) {
+  const m = new THREE.Mesh(geo, e.mat);
+  m.position.set(x, y, z);
+  if (rot) m.rotation.set(rot[0] || 0, rot[1] || 0, rot[2] || 0);
+  m.castShadow = true; m.receiveShadow = true; m.userData.elId = e.id;
+  e.g.add(m); return m;
+}
+// box from plan extents: x0..x1, y0..y1 (plan), h0..h1 (height)
+function box(e, x0, x1, y0, y1, h0, h1) {
+  return add(e, new THREE.BoxGeometry(x1 - x0, h1 - h0, y1 - y0), W((x0 + x1) / 2), (h0 + h1) / 2, Z((y0 + y1) / 2));
+}
+
+// Floor
+const floor = el('floor', 'רצפת המתחם', 'מבנה', '500 × 250');
+box(floor, 0, 500, 0, 250, 0, 1.5);
+
+// Back wall 240×40, h110
+const wall = el('wall', 'קיר אחורי', 'מבנה', '40 × 240 · ג׳ 110');
+box(wall, 0, 40, 10, 250, 1.5, 110);
+
+// Blocking fence 110, h90
+const fence = el('fence', 'גדר חוסמת', 'מבנה', '110 × 4 · ג׳ 90');
+box(fence, 40, 150, 246, 250, 1.5, 90);
+
+// Cashier counter 60×120, h90 with toe kick
+const counter = el('counter', 'דלפק קופה', 'מבנה', '60 × 120 · ג׳ 90');
+box(counter, 150, 210, 130, 250, 10, 90);
+box(counter, 154, 206, 134, 244, 1.5, 10);
+
+// Stuffing machine Ø70, h230 — center (110,45)
+const mx = W(110), mz = Z(45);
+const mBase = el('mBase', 'מכונת מילוי · בסיס', 'מכונת המילוי', 'Ø70 · ג׳ 0–90');
+add(mBase, new THREE.CylinderGeometry(35, 35, 88.5, 64), mx, 1.5 + 44.25, mz);
+const mDome = el('mDome', 'מכונת מילוי · כיפה', 'מכונת המילוי', 'Ø62 · ג׳ 90–182', { opacity: true, double: true });
+{
+  const pts = [];
+  pts.push(new THREE.Vector2(0, 0), new THREE.Vector2(33, 0), new THREE.Vector2(33, 3), new THREE.Vector2(31, 3));
+  pts.push(new THREE.Vector2(31, 52));
+  for (let i = 1; i <= 16; i++) { const t = i / 16 * Math.PI / 2; pts.push(new THREE.Vector2(11 + 20 * Math.cos(t), 52 + 38 * Math.sin(t))); }
+  pts.push(new THREE.Vector2(11, 92), new THREE.Vector2(0, 92));
+  add(mDome, new THREE.LatheGeometry(pts, 64), mx, 90, mz);
+}
+const mCap = el('mCap', 'מכונת מילוי · פקק', 'מכונת המילוי', 'Ø24 · ג׳ 182–190');
+add(mCap, new THREE.CylinderGeometry(12, 12, 8, 48), mx, 186, mz);
+const mSign = el('mSign', 'מכונת מילוי · שלט עגול', 'מכונת המילוי', 'Ø45 · עד ג׳ 230');
+add(mSign, new THREE.CylinderGeometry(22.5, 22.5, 4, 64), mx, 207.5, mz, [Math.PI / 2, 0, 0]);
+
+// Stands 100×50, h110 — open front facing booth interior
+function stand(n, x0) {
+  const f = el('stand' + n, `סטנד ${n} · מסגרת`, `סטנד ${n}`, '100 × 50 · ג׳ 110');
+  const i = el('stand' + n + 'in', `סטנד ${n} · פנים ומדפים`, `סטנד ${n}`, 'גב, מדף אמצעי, תחתית');
+  const t = 3;
+  box(f, x0, x0 + t, 0, 50, 1.5, 110);
+  box(f, x0 + 100 - t, x0 + 100, 0, 50, 1.5, 110);
+  box(f, x0 + t, x0 + 100 - t, 0, 50, 110 - t, 110);
+  box(f, x0 + t, x0 + 100 - t, 46, 50, 1.5, 10); // plinth
+  box(i, x0 + t, x0 + 100 - t, 0, 1.5, 1.5, 110 - t); // back
+  box(i, x0 + t, x0 + 100 - t, 1.5, 46, 1.5, 10 + 2); // bottom deck
+  box(i, x0 + t, x0 + 100 - t, 1.5, 50, 57, 59.5); // middle shelf
+}
+stand(1, 180); stand(2, 290); stand(3, 400);
+
+// Craft table — L shape 200×100, h70
+const tTop = el('tTop', 'שולחן יצירה · משטח', 'שולחן יצירה ושרפרפים', '200 × 100 · ג׳ 70');
+{
+  const s = new THREE.Shape();
+  const p = (x, y) => [W(x), Z(y)];
+  s.moveTo(...p(320, 210));
+  s.lineTo(...p(452, 210));
+  s.quadraticCurveTo(...p(460, 210), ...p(460, 202));
+  s.lineTo(...p(460, 170));
+  s.absarc(W(480), Z(170), 20, Math.PI, 2 * Math.PI, false);
+  s.lineTo(...p(500, 200));
+  s.quadraticCurveTo(...p(500, 250), ...p(450, 250));
+  s.lineTo(...p(320, 250));
+  s.absarc(W(320), Z(230), 20, Math.PI / 2, 3 * Math.PI / 2, false);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: 3.5, bevelEnabled: false, curveSegments: 24 });
+  add(tTop, geo, 0, 70, 0, [Math.PI / 2, 0, 0]);
+}
+const tLegs = el('tLegs', 'שולחן יצירה · רגליים', 'שולחן יצירה ושרפרפים', '8 × 8 · ג׳ 66.5');
+for (const [x, y] of [[322, 230], [395, 230], [478, 232], [480, 172]]) box(tLegs, x - 4, x + 4, y - 4, y + 4, 1.5, 66.5);
+
+const sSeat = el('sSeat', 'שרפרפים · מושב', 'שולחן יצירה ושרפרפים', 'Ø32 · ג׳ 45');
+const sBase = el('sBase', 'שרפרפים · רגל ובסיס', 'שולחן יצירה ושרפרפים', 'עמוד, טבעת רגליים, בסיס Ø30');
+for (const x of [360, 400, 440]) {
+  const X = W(x), Zc = Z(187);
+  add(sSeat, new THREE.CylinderGeometry(16, 16, 4, 48), X, 43, Zc);
+  add(sBase, new THREE.CylinderGeometry(2.5, 2.5, 39.5, 20), X, 21.25, Zc);
+  add(sBase, new THREE.TorusGeometry(10, 1, 10, 40), X, 18, Zc, [Math.PI / 2, 0, 0]);
+  add(sBase, new THREE.CylinderGeometry(15, 15, 2, 48), X, 2.5, Zc);
+}
+
+// ---------- selection outline ----------
+const selBox = new THREE.Box3Helper(new THREE.Box3(), 0x2f6fb3);
+selBox.visible = false; scene.add(selBox);
+let selected = null;
+function select(id, scroll) {
+  selected = id;
+  document.querySelectorAll('.row').forEach(r => r.classList.toggle('sel', r.dataset.id === id));
+  if (!id) { selBox.visible = false; return; }
+  selBox.box.setFromObject(byId[id].g).expandByScalar(1.5);
+  selBox.visible = true;
+  if (scroll) document.querySelector(`.row[data-id="${id}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+// ---------- state ----------
+function load() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; } }
+function save() {
+  const o = {}; for (const e of elements) o[e.id] = { c: '#' + e.mat.color.getHexString(), o: e.mat.opacity };
+  try { localStorage.setItem(STORE, JSON.stringify(o)); } catch {}
+}
+function setColor(e, hex, persist = true) {
+  e.mat.color.set(hex);
+  const row = document.querySelector(`.row[data-id="${e.id}"]`);
+  if (row) { row.querySelector('input[type=color]').value = hex; const h = row.querySelector('.hex'); if (document.activeElement !== h) h.value = hex.toUpperCase(); }
+  if (persist) save();
+}
+function setOpacity(e, v, persist = true) {
+  e.mat.opacity = v; e.mat.transparent = v < 1; e.mat.depthWrite = v >= 1; e.mat.needsUpdate = true;
+  e.g.traverse(m => { if (m.isMesh) m.castShadow = v > 0.6; });
+  const r = document.querySelector(`.row[data-id="${e.id}"] .op input`); if (r) r.value = v;
+  if (persist) save();
+}
+
+// ---------- panel ----------
+const list = document.getElementById('list');
+let lastGroup = null;
+for (const e of elements) {
+  if (e.group !== lastGroup) { const gdiv = document.createElement('div'); gdiv.className = 'group'; gdiv.textContent = e.group; list.appendChild(gdiv); lastGroup = e.group; }
+  const row = document.createElement('div');
+  row.className = 'row'; row.dataset.id = e.id;
+  row.innerHTML = `
+    <input type="color" id="c-${e.id}" value="${DEFAULT}" aria-label="${e.he}">
+    <label class="name" for="h-${e.id}"><b>${e.he}</b><span>${e.dims}</span></label>
+    <input class="hex" id="h-${e.id}" value="${DEFAULT.toUpperCase()}" maxlength="7" spellcheck="false" aria-label="קוד צבע ${e.he}">
+    ${e.opacity ? `<div class="op"><span>שקיפות</span><input type="range" id="o-${e.id}" min="0.15" max="1" step="0.05" value="1" aria-label="אטימות ${e.he}"></div>` : ''}`;
+  list.appendChild(row);
+  const cp = row.querySelector('input[type=color]'), hx = row.querySelector('.hex');
+  cp.addEventListener('input', () => { setColor(e, cp.value); select(e.id); });
+  hx.addEventListener('input', () => {
+    let v = hx.value.trim(); if (!v.startsWith('#')) v = '#' + v;
+    if (/^#[0-9a-f]{6}$/i.test(v)) setColor(e, v.toLowerCase());
+  });
+  hx.addEventListener('blur', () => { hx.value = '#' + e.mat.color.getHexString().toUpperCase(); });
+  hx.addEventListener('focus', () => select(e.id));
+  row.querySelector('.name').addEventListener('click', () => select(e.id));
+  row.querySelector('.op input')?.addEventListener('input', ev => setOpacity(e, +ev.target.value));
+}
+
+const saved = load();
+for (const e of elements) { const s = saved[e.id]; if (s) { if (s.c) setColor(e, s.c, false); if (s.o != null && e.opacity) setOpacity(e, s.o, false); } }
+
+document.getElementById('allColor').addEventListener('input', ev => { for (const e of elements) setColor(e, ev.target.value, false); save(); });
+document.getElementById('reset').addEventListener('click', () => {
+  for (const e of elements) { setColor(e, DEFAULT, false); if (e.opacity) setOpacity(e, 1, false); }
+  document.getElementById('allColor').value = DEFAULT; save(); toast('הצבעים אופסו');
+});
+document.getElementById('copy').addEventListener('click', () => {
+  const txt = elements.map(e => `${e.he}: #${e.mat.color.getHexString().toUpperCase()}`).join('\n');
+  const out = document.getElementById('out');
+  navigator.clipboard.writeText(txt).then(() => toast('רשימת הצבעים הועתקה')).catch(() => {
+    out.hidden = false; out.value = txt; out.select(); toast('סמנו והעתיקו את הטקסט');
+  });
+});
+let tt; function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 1800); }
+
+// ---------- picking ----------
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+let down = null;
+canvas.addEventListener('pointerdown', ev => { down = [ev.clientX, ev.clientY]; });
+canvas.addEventListener('pointerup', ev => {
+  if (!down || Math.hypot(ev.clientX - down[0], ev.clientY - down[1]) > 5) return;
+  const r = canvas.getBoundingClientRect();
+  ptr.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+  const hits = ray.intersectObjects(elements.map(e => e.g), true);
+  select(hits.length ? hits[0].object.userData.elId : null, true);
+});
+
+// ---------- views ----------
+const views = {
+  persp: [[330, 330, 620], [0, 60, 0]],
+  front: [[0, 110, 720], [0, 100, 0]],
+  top:   [[0, 900, 0.01], [0, 0, 0]],
+  side:  [[760, 120, 0], [0, 90, 0]],
+};
+function setView(k) {
+  const [p, t] = views[k]; camera.position.set(...p); controls.target.set(...t); controls.update();
+  document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === k));
+}
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+setView('persp');
+
+// ---------- theme / resize / loop ----------
+function applyScene() {
+  const c = getComputedStyle(document.documentElement).getPropertyValue('--scene').trim() || '#e6e4e0';
+  scene.background = new THREE.Color(c); ground.material.color.set(c);
+}
+applyScene();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyScene);
+new MutationObserver(applyScene).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== Math.floor(w * renderer.getPixelRatio()) || canvas.height !== Math.floor(h * renderer.getPixelRatio())) {
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+}
+renderer.setAnimationLoop(() => { resize(); controls.update(); renderer.render(scene, camera); });
+</script>
