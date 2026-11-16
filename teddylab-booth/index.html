@@ -40,23 +40,23 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); overfl
 .head p { margin: 0; font-size: 12px; color: var(--muted); }
 .list { overflow-y: auto; padding: 6px 8px 12px; flex: 1; min-height: 0; }
 .group { font-size: 11px; letter-spacing: .06em; color: var(--muted); padding: 12px 8px 4px; }
-.row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px; border: 1px solid transparent; }
+.row { display: grid; grid-template-columns: minmax(0,1fr); align-items: center; gap: 6px; padding: 7px 8px; border-radius: 8px; border: 1px solid transparent; }
 .row.sel { background: var(--accent-soft); border-color: var(--accent); }
 .name { min-width: 0; cursor: pointer; }
 .name b { display: block; font-size: 14px; font-weight: 500; }
 .name span { display: block; font-size: 11px; color: var(--muted); direction: ltr; text-align: right; font-variant-numeric: tabular-nums; }
-.sws { display: flex; gap: 5px; }
-.sw { width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--line); cursor: pointer; padding: 0; background-size: cover; }
+.sws { display: flex; flex-wrap: wrap; gap: 5px; }
+.sw { width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--line); cursor: pointer; padding: 0; background-size: cover; }
 .sw.on { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sw:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
 .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 5px; }
 .legend i { width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--line); display: inline-block; background-size: cover; }
-.op { grid-column: 1 / 3; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.op { grid-column: 1; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
 .op input { flex: 1; min-width: 0; }
 .foot { border-top: 1px solid var(--line); padding: 10px 12px; display: grid; gap: 8px; }
 .allrow { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.allrow { justify-content: space-between; flex-wrap: wrap; }
+.allrow { flex-direction: column; align-items: stretch; gap: 6px; }
 .actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .actions .btn { flex: 1; }
 .toast { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
@@ -146,8 +146,13 @@ function makeTex(cv, periodCm) {
 }
 const FINISHES = {
   base:    { he: 'בסיס (ללא)',        color: '#d4d2ce' },
+  black:   { he: 'שחור',              color: '#1c1c1d', roughness: 0.5 },
   red:     { he: 'אדום תמרור',        color: '#c8102e' },
+  yellow:  { he: 'צהוב תמרור',        color: '#f0c41b' },
+  green:   { he: 'ירוק תמרור',        color: '#2f9450' },
+  blue:    { he: 'כחול תמרור',        color: '#2a5da8' },
   sky:     { he: 'תכלת',              color: '#8db4d0' },
+  pink:    { he: 'ורוד בהיר',         color: '#f2b3bd' },
   parquet: { he: 'פרקט',              color: '#ffffff', tex: makeTex(parquetCanvas, 60), roughness: 0.55, swatch: parquetCanvas },
   checker: { he: 'משבצות שחור לבן',   color: '#ffffff', tex: makeTex(checkerCanvas, 30), roughness: 0.4, swatch: checkerCanvas },
 };
