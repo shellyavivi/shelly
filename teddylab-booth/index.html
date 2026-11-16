@@ -56,6 +56,28 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); overfl
 .legend i { width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--line); display: inline-block; background-size: cover; }
 .op { grid-column: 1; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
 .op input { flex: 1; min-width: 0; }
+.tabs { display: flex; gap: 4px; padding: 8px 12px 0; border-bottom: 1px solid var(--line); }
+.tab { font: 500 14px var(--font); color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 10px; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.pane { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.pane[hidden] { display: none; }
+.vsave { padding: 12px; display: grid; gap: 8px; border-bottom: 1px solid var(--line); }
+.vsave .inrow { display: flex; gap: 6px; }
+.vsave input { flex: 1; min-width: 0; font: 14px var(--font); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+.btn.primary { background: var(--accent); color: var(--panel); border-color: var(--accent); }
+.vnote { font-size: 11px; color: var(--muted); }
+.empty { font-size: 13px; color: var(--muted); padding: 16px 8px; line-height: 1.5; }
+.ver { border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: grid; gap: 8px; margin: 8px 4px; }
+.ver.on { border-color: var(--accent); background: var(--accent-soft); }
+.vtop { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.vtop b { font-size: 14px; font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
+.vtop span { font-size: 11px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.vstate { font-size: 11px; color: var(--accent); }
+.strip { display: flex; flex-wrap: wrap; gap: 3px; }
+.strip i { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--line); background-size: cover; }
+.vact { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn.sm { padding: 5px 9px; font-size: 12px; }
+.btn.danger { color: #c8102e; border-color: #c8102e; }
 .foot { border-top: 1px solid var(--line); padding: 10px 12px; display: grid; gap: 8px; }
 .allrow { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .allrow { flex-direction: column; align-items: stretch; gap: 6px; }
@@ -93,6 +115,21 @@ textarea#out { width: 100%; height: 90px; font: 12px ui-monospace, monospace; di
       <p>מתחם 500×250 ס״מ. לחצו על אלמנט במודל או ברשימה ובחרו גימור.</p>
       <div class="legend" id="legend"></div>
     </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tabFin" aria-selected="true" aria-controls="paneFin">גימורים</button>
+      <button class="tab" role="tab" id="tabVer" aria-selected="false" aria-controls="paneVer">גרסאות</button>
+    </div>
+    <div class="pane" id="paneVer" role="tabpanel" hidden>
+      <div class="vsave">
+        <div class="inrow">
+          <input id="verName" placeholder="שם הגרסה, למשל: הצעה 2 · אדום-תכלת" maxlength="60" aria-label="שם הגרסה">
+          <button class="btn primary" id="verSave">שמור גרסה</button>
+        </div>
+        <div class="vnote" id="verNote">שומר את הגימורים הנוכחיים כגרסה חדשה בארכיון.</div>
+      </div>
+      <div class="list" id="verList"></div>
+    </div>
+    <div class="pane" id="paneFin" role="tabpanel">
     <div class="list" id="list"></div>
     <div class="foot">
       <div class="allrow"><span>גימור אחד לכל האלמנטים</span><div class="sws" id="allSw"></div></div>
@@ -101,6 +138,7 @@ textarea#out { width: 100%; height: 90px; font: 12px ui-monospace, monospace; di
         <button class="btn" id="reset">איפוס</button>
       </div>
       <textarea id="out" readonly hidden aria-label="רשימת צבעים"></textarea>
+    </div>
     </div>
   </aside>
 </div>
@@ -334,16 +372,16 @@ function load() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } 
 function snap() { const o = {}; for (const e of elements) o[e.id] = { f: e.finish, o: e.mat.opacity }; return o; }
 function persist(o) { try { localStorage.setItem(STORE, JSON.stringify(o)); } catch {} }
 // Undo/redo: every committed change pushes a snapshot
-const hist = []; let hi = -1;
+const hist = []; let hi = -1; let onChange = null;
 function save() {
   const o = snap(), s = JSON.stringify(o);
   if (hi >= 0 && JSON.stringify(hist[hi]) === s) return;
   hist.length = hi + 1; hist.push(o); hi = hist.length - 1;
-  persist(o); updHist();
+  persist(o); updHist(); onChange && onChange();
 }
 function applySnap(o) {
   for (const e of elements) { const s = o[e.id]; if (!s) continue; setFinish(e, s.f, false); if (e.opacity) setOpacity(e, s.o, false); }
-  persist(o); updHist(); if (selected) select(selected);
+  persist(o); updHist(); if (selected) select(selected); onChange && onChange();
 }
 function undo() { if (hi > 0) { hi--; applySnap(hist[hi]); } }
 function redo() { if (hi < hist.length - 1) { hi++; applySnap(hist[hi]); } }
@@ -412,6 +450,107 @@ document.getElementById('copy').addEventListener('click', () => {
     out.hidden = false; out.value = txt; out.select(); toast('סמנו והעתיקו את הטקסט');
   });
 });
+// ---------- versions archive ----------
+// Shared via the artifact's db when available; falls back to this browser only.
+const verList = document.getElementById('verList'), verName = document.getElementById('verName'), verNote = document.getElementById('verNote');
+const LOCALV = 'teddylab-booth-versions-v1';
+let versions = [], activeVer = null, store = null, armedDel = null;
+const localV = {
+  all() { try { return JSON.parse(localStorage.getItem(LOCALV)) || []; } catch { return []; } },
+  write(a) { try { localStorage.setItem(LOCALV, JSON.stringify(a)); } catch {} },
+};
+const fmt = (t) => t ? new Date(t).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+const sameAsNow = (v) => JSON.stringify(Object.fromEntries(elements.map(e => [e.id, v.finishes?.[e.id]?.f || 'base']))) === JSON.stringify(Object.fromEntries(elements.map(e => [e.id, e.finish])));
+function renderVers() {
+  verList.innerHTML = '';
+  if (!versions.length) {
+    verList.innerHTML = '<p class="empty">עוד אין גרסאות בארכיון. בחרו גימורים, תנו שם למעלה ולחצו "שמור גרסה". אפשר לשמור כמה הצעות ולעבור ביניהן.</p>';
+    return;
+  }
+  for (const v of versions) {
+    const card = document.createElement('div');
+    const isActive = v.id === activeVer;
+    card.className = 'ver' + (isActive ? ' on' : '');
+    const strip = elements.map(e => { const k = FINISHES[v.finishes?.[e.id]?.f] ? v.finishes[e.id].f : 'base'; return `<i style="${swatchCss(k)}" title="${e.he}: ${FINISHES[k].he}"></i>`; }).join('');
+    const state = isActive ? (sameAsNow(v) ? 'מוצגת עכשיו' : 'מוצגת עכשיו · יש שינויים שלא נשמרו') : '';
+    card.innerHTML = `<div class="vtop"><b></b><span>${fmt(v.updatedAt || v.createdAt)}</span></div>
+      ${state ? `<div class="vstate">${state}</div>` : ''}
+      <div class="strip">${strip}</div>
+      <div class="vact">
+        <button class="btn sm" data-a="load">טען</button>
+        <button class="btn sm" data-a="over">עדכן לגימורים הנוכחיים</button>
+        <button class="btn sm${armedDel === v.id ? ' danger' : ''}" data-a="del">${armedDel === v.id ? 'ללחוץ שוב למחיקה' : 'מחק'}</button>
+      </div>`;
+    card.querySelector('b').textContent = v.name || 'ללא שם';
+    card.querySelector('[data-a=load]').addEventListener('click', () => loadVer(v));
+    card.querySelector('[data-a=over]').addEventListener('click', () => overVer(v));
+    card.querySelector('[data-a=del]').addEventListener('click', () => {
+      if (armedDel !== v.id) { armedDel = v.id; renderVers(); setTimeout(() => { if (armedDel === v.id) { armedDel = null; renderVers(); } }, 4000); return; }
+      armedDel = null; delVer(v);
+    });
+    verList.appendChild(card);
+  }
+}
+onChange = renderVers;
+const fail = (err) => { console.warn(err); toast(err?.code === 'quota_exceeded' ? 'הארכיון מלא, מחקו גרסאות ישנות' : 'לא נשמר. ייתכן שאין לך הרשאת עריכה לדף'); };
+async function addVer() {
+  const name = verName.value.trim() || `גרסה ${versions.length + 1}`;
+  const now = Date.now();
+  const doc = { name, finishes: snap(), createdAt: now, updatedAt: now };
+  try {
+    if (store) { const ref = store.collection('versions').doc(); activeVer = ref.id; await ref.set(doc); }
+    else { const id = 'v' + now; activeVer = id; versions.unshift({ id, ...doc }); localV.write(versions); renderVers(); }
+    verName.value = ''; toast('נשמר: ' + name);
+  } catch (err) { fail(err); }
+}
+async function overVer(v) {
+  const d = { finishes: snap(), updatedAt: Date.now() };
+  try {
+    if (store) await store.doc('versions/' + v.id).update(d);
+    else { Object.assign(v, d); localV.write(versions); }
+    activeVer = v.id; renderVers(); toast('עודכן: ' + (v.name || ''));
+  } catch (err) { fail(err); }
+}
+async function delVer(v) {
+  try {
+    if (store) await store.doc('versions/' + v.id).delete();
+    else { versions = versions.filter(x => x !== v); localV.write(versions); }
+    if (activeVer === v.id) activeVer = null; renderVers(); toast('נמחק: ' + (v.name || ''));
+  } catch (err) { fail(err); }
+}
+function loadVer(v) {
+  for (const e of elements) {
+    const s = v.finishes?.[e.id];
+    setFinish(e, s && FINISHES[s.f] ? s.f : 'base', false);
+    if (e.opacity) setOpacity(e, s?.o ?? 1, false);
+  }
+  activeVer = v.id; save(); renderVers(); toast('נטען: ' + (v.name || ''));
+}
+document.getElementById('verSave').addEventListener('click', addVer);
+verName.addEventListener('keydown', ev => { if (ev.key === 'Enter') addVer(); });
+
+versions = localV.all(); renderVers();
+verNote.textContent = 'שומר את הגימורים הנוכחיים כגרסה חדשה. כרגע הארכיון נשמר בדפדפן הזה בלבד.';
+(async () => {
+  const db = await window.claude?.use?.('db');
+  if (!db) return;
+  store = db;
+  verNote.textContent = 'שומר את הגימורים הנוכחיים כגרסה חדשה. הארכיון נשמר עם הדף, וכל מי שהדף משותף איתו רואה אותו.';
+  const slow = setTimeout(() => { verNote.textContent = 'הארכיון עוד לא נטען, ייתכן שאין חיבור.'; }, 10000);
+  db.collection('versions').orderBy('createdAt', 'desc').onSnapshot(snapq => {
+    if (!snapq.metadata.fromCache) clearTimeout(slow);
+    versions = snapq.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderVers();
+  }, err => { clearTimeout(slow); console.warn(err); verNote.textContent = 'לא ניתן לטעון את הארכיון כרגע.'; });
+})();
+
+// tabs
+const tabs = { tabFin: 'paneFin', tabVer: 'paneVer' };
+for (const [t, pn] of Object.entries(tabs)) document.getElementById(t).addEventListener('click', () => {
+  for (const [t2, p2] of Object.entries(tabs)) { document.getElementById(t2).setAttribute('aria-selected', t2 === t); document.getElementById(p2).hidden = t2 !== t; }
+  if (t === 'tabVer') renderVers();
+});
+
 let tt; function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 1800); }
 
 // ---------- picking ----------
