@@ -32,6 +32,8 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); overfl
 .btn:hover { border-color: var(--accent); }
 .btn:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .btn.on { background: var(--accent-soft); border-color: var(--accent); }
+.btn:disabled { opacity: .4; cursor: default; border-color: var(--line); }
+.sep { width: 1px; background: var(--line); margin: 2px 4px; }
 .hint { position: absolute; bottom: 10px; left: max(12px, env(safe-area-inset-left, 0px)); font-size: 12px; color: var(--muted); background: var(--panel); padding: 5px 9px; border-radius: 6px; border: 1px solid var(--line); }
 
 .panel { background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; direction: rtl; }
@@ -78,6 +80,9 @@ textarea#out { width: 100%; height: 90px; font: 12px ui-monospace, monospace; di
       <button class="btn" data-view="front">חזית</button>
       <button class="btn" data-view="top">תוכנית</button>
       <button class="btn" data-view="side">צד</button>
+      <span class="sep"></span>
+      <button class="btn" id="undo" title="חזרה (Ctrl+Z)" disabled>↶ חזרה</button>
+      <button class="btn" id="redo" title="קדימה (Ctrl+Y)" disabled>קדימה ↷</button>
     </div>
     <div class="hint">גרירה לסיבוב · גלגלת לזום · לחיצה על אלמנט לבחירה</div>
   </div>
@@ -326,9 +331,25 @@ function select(id, scroll) {
 
 // ---------- state ----------
 function load() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; } }
+function snap() { const o = {}; for (const e of elements) o[e.id] = { f: e.finish, o: e.mat.opacity }; return o; }
+function persist(o) { try { localStorage.setItem(STORE, JSON.stringify(o)); } catch {} }
+// Undo/redo: every committed change pushes a snapshot
+const hist = []; let hi = -1;
 function save() {
-  const o = {}; for (const e of elements) o[e.id] = { f: e.finish, o: e.mat.opacity };
-  try { localStorage.setItem(STORE, JSON.stringify(o)); } catch {}
+  const o = snap(), s = JSON.stringify(o);
+  if (hi >= 0 && JSON.stringify(hist[hi]) === s) return;
+  hist.length = hi + 1; hist.push(o); hi = hist.length - 1;
+  persist(o); updHist();
+}
+function applySnap(o) {
+  for (const e of elements) { const s = o[e.id]; if (!s) continue; setFinish(e, s.f, false); if (e.opacity) setOpacity(e, s.o, false); }
+  persist(o); updHist(); if (selected) select(selected);
+}
+function undo() { if (hi > 0) { hi--; applySnap(hist[hi]); } }
+function redo() { if (hi < hist.length - 1) { hi++; applySnap(hist[hi]); } }
+function updHist() {
+  const u = document.getElementById('undo'), r = document.getElementById('redo');
+  if (u) u.disabled = hi <= 0; if (r) r.disabled = hi >= hist.length - 1;
 }
 function setFinish(e, k, persist = true) {
   const f = FINISHES[k]; if (!f) return;
@@ -359,13 +380,23 @@ for (const e of elements) {
   list.appendChild(row);
   row.querySelectorAll('.sw').forEach(b => b.addEventListener('click', () => { setFinish(e, b.dataset.f); select(e.id); }));
   row.querySelector('.name').addEventListener('click', () => select(e.id));
-  row.querySelector('.op input')?.addEventListener('input', ev => setOpacity(e, +ev.target.value));
+  row.querySelector('.op input')?.addEventListener('input', ev => setOpacity(e, +ev.target.value, false));
+  row.querySelector('.op input')?.addEventListener('change', () => save());
 }
 
 document.getElementById('legend').innerHTML = Object.keys(FINISHES).filter(k => k !== 'base').map(k => `<span><i style="${swatchCss(k)}"></i>${FINISHES[k].he}</span>`).join('');
 for (const e of elements) setFinish(e, DEFAULT, false);
 const saved = load();
 for (const e of elements) { const s = saved[e.id]; if (s) { if (s.f) setFinish(e, s.f, false); if (s.o != null && e.opacity) setOpacity(e, s.o, false); } }
+save();
+document.getElementById('undo').addEventListener('click', undo);
+document.getElementById('redo').addEventListener('click', redo);
+addEventListener('keydown', ev => {
+  if (!(ev.ctrlKey || ev.metaKey)) return;
+  const k = ev.key.toLowerCase();
+  if (k === 'z' && !ev.shiftKey) { ev.preventDefault(); undo(); }
+  else if (k === 'y' || (k === 'z' && ev.shiftKey)) { ev.preventDefault(); redo(); }
+});
 
 const allSw = document.getElementById('allSw');
 allSw.innerHTML = Object.keys(FINISHES).map(k => `<button class="sw" data-f="${k}" style="${swatchCss(k)}" title="${FINISHES[k].he}" aria-label="הכל: ${FINISHES[k].he}"></button>`).join('');
