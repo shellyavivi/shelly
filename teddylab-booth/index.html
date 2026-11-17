@@ -304,15 +304,21 @@ box(floor, 0, 500, 0, 250, 0, 1.5);
 
 // Back wall 240×40, h110
 const wall = el('wall', 'קיר אחורי', 'מבנה', '40 × 240 · ג׳ 110');
-box(wall, 0, 40, 10, 250, 1.5, 110);
+box(wall, 0, 40, 10, 250, 1.5, 108);
+const wallTop = el('wallTop', 'קיר אחורי · מלמעלה', 'מבנה', 'משטח עליון 40 × 240');
+box(wallTop, 0, 40, 10, 250, 108, 110);
 
 // Blocking fence 110, h90
 const fence = el('fence', 'גדר חוסמת', 'מבנה', '110 × 4 · ג׳ 90');
-box(fence, 40, 150, 246, 250, 1.5, 90);
+box(fence, 40, 150, 246, 250, 1.5, 88);
+const fenceTop = el('fenceTop', 'גדר חוסמת · מלמעלה', 'מבנה', 'משטח עליון 110 × 4');
+box(fenceTop, 40, 150, 246, 250, 88, 90);
 
 // Cashier counter 60×120, h90 with toe kick
 const counter = el('counter', 'דלפק קופה', 'מבנה', '60 × 120 · ג׳ 90');
-box(counter, 150, 210, 130, 250, 10, 90);
+box(counter, 150, 210, 130, 250, 10, 88);
+const counterTop = el('counterTop', 'דלפק קופה · מלמעלה', 'מבנה', 'משטח עליון 60 × 120');
+box(counterTop, 150, 210, 130, 250, 88, 90);
 box(counter, 154, 206, 134, 244, 1.5, 10);
 
 // Stuffing machine Ø70, h230 — center (110,45)
