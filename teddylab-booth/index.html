@@ -283,7 +283,7 @@ const byId = {};
 function el(id, he, group, dims, opts = {}) {
   const mat = new THREE.MeshStandardMaterial({ color: FINISHES.base.color, roughness: 0.65, metalness: 0, side: opts.double ? THREE.DoubleSide : THREE.FrontSide });
   const g = new THREE.Group(); g.userData.elId = id; scene.add(g);
-  const e = { id, he, group, dims, mat, g, opacity: opts.opacity || false, finish: DEFAULT };
+  const e = { id, he, group, dims, mat, g, opacity: opts.opacity || false, defOp: opts.defOp ?? 1, finish: DEFAULT };
   elements.push(e); byId[id] = e; return e;
 }
 function add(e, geo, x, y, z, rot) {
@@ -336,13 +336,14 @@ add(mSign, new THREE.CylinderGeometry(22.5, 22.5, 4, 64), mx, 207.5, mz, [Math.P
 // Stands 100×50, h110 — open front facing booth interior
 function stand(n, x0) {
   const f = el('stand' + n, `סטנד ${n} · מסגרת`, `סטנד ${n}`, '100 × 50 · ג׳ 110');
-  const i = el('stand' + n + 'in', `סטנד ${n} · פנים ומדפים`, `סטנד ${n}`, 'גב, מדף אמצעי, תחתית');
+  const i = el('stand' + n + 'in', `סטנד ${n} · מדפים`, `סטנד ${n}`, 'מדף אמצעי, תחתית');
+  const bk = el('stand' + n + 'back', `סטנד ${n} · גב שקוף`, `סטנד ${n}`, 'אקריליק 94 × 105', { opacity: true, defOp: 0.2, double: true });
   const t = 3;
   box(f, x0, x0 + t, 0, 50, 1.5, 110);
   box(f, x0 + 100 - t, x0 + 100, 0, 50, 1.5, 110);
   box(f, x0 + t, x0 + 100 - t, 0, 50, 110 - t, 110);
   box(f, x0 + t, x0 + 100 - t, 46, 50, 1.5, 10); // plinth
-  box(i, x0 + t, x0 + 100 - t, 0, 1.5, 1.5, 110 - t); // back
+  box(bk, x0 + t, x0 + 100 - t, 0, 1.5, 1.5, 110 - t); // transparent back
   box(i, x0 + t, x0 + 100 - t, 1.5, 46, 1.5, 10 + 2); // bottom deck
   box(i, x0 + t, x0 + 100 - t, 1.5, 50, 57, 59.5); // middle shelf
 }
@@ -446,7 +447,7 @@ for (const e of elements) {
   row.querySelector('.op input')?.addEventListener('change', () => save());
 }
 
-for (const e of elements) setFinish(e, DEFAULT, false);
+for (const e of elements) { setFinish(e, DEFAULT, false); if (e.opacity) setOpacity(e, e.defOp, false); }
 const saved = load();
 for (const e of elements) { const s = saved[e.id]; if (s) { if (s.f) setFinish(e, s.f, false); if (s.o != null && e.opacity) setOpacity(e, s.o, false); } }
 save();
@@ -463,7 +464,7 @@ const allSw = document.getElementById('allSw');
 allSw.innerHTML = Object.keys(FINISHES).map(k => `<button class="sw" data-f="${k}" style="${swatchCss(k)}" title="${FINISHES[k].he}" aria-label="הכל: ${FINISHES[k].he}"></button>`).join('');
 allSw.querySelectorAll('.sw').forEach(b => b.addEventListener('click', () => { for (const e of elements) setFinish(e, b.dataset.f, false); save(); toast('הוחל על כל האלמנטים: ' + FINISHES[b.dataset.f].he); }));
 document.getElementById('reset').addEventListener('click', () => {
-  for (const e of elements) { setFinish(e, DEFAULT, false); if (e.opacity) setOpacity(e, 1, false); }
+  for (const e of elements) { setFinish(e, DEFAULT, false); if (e.opacity) setOpacity(e, e.defOp, false); }
   save(); toast('הגימורים אופסו');
 });
 document.getElementById('copy').addEventListener('click', () => {
@@ -545,7 +546,7 @@ function loadVer(v) {
   for (const e of elements) {
     const s = v.finishes?.[e.id];
     setFinish(e, s && FINISHES[s.f] ? s.f : 'base', false);
-    if (e.opacity) setOpacity(e, s?.o ?? 1, false);
+    if (e.opacity) setOpacity(e, s?.o ?? e.defOp, false);
   }
   activeVer = v.id; save(); renderVers(); toast('נטען: ' + (v.name || ''));
 }
