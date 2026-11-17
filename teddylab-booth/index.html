@@ -113,7 +113,6 @@ textarea#out { width: 100%; height: 90px; font: 12px ui-monospace, monospace; di
     <div class="head">
       <h1>Teddy Lab · גימור אלמנטים</h1>
       <p>מתחם 500×250 ס״מ. לחצו על אלמנט במודל או ברשימה ובחרו גימור.</p>
-      <div class="legend" id="legend"></div>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tabFin" aria-selected="true" aria-controls="paneFin">גימורים</button>
@@ -422,7 +421,6 @@ for (const e of elements) {
   row.querySelector('.op input')?.addEventListener('change', () => save());
 }
 
-document.getElementById('legend').innerHTML = Object.keys(FINISHES).filter(k => k !== 'base').map(k => `<span><i style="${swatchCss(k)}"></i>${FINISHES[k].he}</span>`).join('');
 for (const e of elements) setFinish(e, DEFAULT, false);
 const saved = load();
 for (const e of elements) { const s = saved[e.id]; if (s) { if (s.f) setFinish(e, s.f, false); if (s.o != null && e.opacity) setOpacity(e, s.o, false); } }
