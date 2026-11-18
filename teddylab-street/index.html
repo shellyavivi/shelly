@@ -1,0 +1,781 @@
+<title>Teddy Lab Street Corner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: full-bleed 3D stage, element/color panel docked right (bottom sheet on phones) */
+:root {
+  --bg: #ecebe8;
+  --panel: #fbfaf8;
+  --fg: #23221f;
+  --muted: #6f6c66;
+  --line: #dcd9d3;
+  --accent: #2f6fb3;
+  --accent-soft: #e2ecf7;
+  --scene: #e6e4e0;
+  --font: 'Rubik', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1b1c1e; --panel: #232427; --fg: #ecebe8; --muted: #a09d97; --line: #37383c;
+  --accent: #79aee6; --accent-soft: #2a3644; --scene: #2a2b2e; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #1b1c1e; --panel: #232427; --fg: #ecebe8; --muted: #a09d97; --line: #37383c;
+  --accent: #79aee6; --accent-soft: #2a3644; --scene: #2a2b2e; color-scheme: dark }
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); overflow: hidden; }
+.app { display: grid; grid-template-columns: minmax(0,1fr) 340px; height: 100%; }
+.stage { position: relative; min-width: 0; }
+#c { display: block; width: 100%; height: 100%; touch-action: none; }
+.views { position: absolute; top: 12px; left: max(12px, env(safe-area-inset-left, 0px)); display: flex; gap: 6px; flex-wrap: wrap; }
+.btn { font: 500 13px var(--font); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 11px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.on { background: var(--accent-soft); border-color: var(--accent); }
+.btn:disabled { opacity: .4; cursor: default; border-color: var(--line); }
+.sep { width: 1px; background: var(--line); margin: 2px 4px; }
+.hint { position: absolute; bottom: 10px; left: max(12px, env(safe-area-inset-left, 0px)); font-size: 12px; color: var(--muted); background: var(--panel); padding: 5px 9px; border-radius: 6px; border: 1px solid var(--line); }
+
+.panel { background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; direction: rtl; }
+.head { padding: 16px 16px 10px; border-bottom: 1px solid var(--line); display: grid; gap: 4px; }
+.head h1 { font-size: 17px; font-weight: 700; margin: 0; }
+.head p { margin: 0; font-size: 12px; color: var(--muted); }
+.list { overflow-y: auto; padding: 6px 8px 12px; flex: 1; min-height: 0; }
+.group { font-size: 11px; letter-spacing: .06em; color: var(--muted); padding: 12px 8px 4px; }
+.row { display: grid; grid-template-columns: minmax(0,1fr); align-items: center; gap: 6px; padding: 7px 8px; border-radius: 8px; border: 1px solid transparent; }
+.row.sel { background: var(--accent-soft); border-color: var(--accent); }
+.name { min-width: 0; cursor: pointer; }
+.nrow { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.vis { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); white-space: nowrap; cursor: pointer; }
+.row.off .sws, .row.off .name { opacity: .4; }
+.name b { display: block; font-size: 14px; font-weight: 500; }
+.name span { display: block; font-size: 11px; color: var(--muted); direction: ltr; text-align: right; font-variant-numeric: tabular-nums; }
+.sws { display: flex; flex-wrap: wrap; gap: 5px; }
+.sw { width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--line); cursor: pointer; padding: 0; background-size: cover; }
+.sw.on { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sw:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--line); display: inline-block; background-size: cover; }
+.op { grid-column: 1; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.op input { flex: 1; min-width: 0; }
+.tabs { display: flex; gap: 4px; padding: 8px 12px 0; border-bottom: 1px solid var(--line); }
+.tab { font: 500 14px var(--font); color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 10px; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.pane { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.pane[hidden] { display: none; }
+.vsave { padding: 12px; display: grid; gap: 8px; border-bottom: 1px solid var(--line); }
+.vsave .inrow { display: flex; gap: 6px; }
+.vsave input { flex: 1; min-width: 0; font: 14px var(--font); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+.btn.primary { background: var(--accent); color: var(--panel); border-color: var(--accent); }
+.vnote { font-size: 11px; color: var(--muted); }
+.empty { font-size: 13px; color: var(--muted); padding: 16px 8px; line-height: 1.5; }
+.ver { border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: grid; gap: 8px; margin: 8px 4px; }
+.ver.on { border-color: var(--accent); background: var(--accent-soft); }
+.vtop { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.vtop b { font-size: 14px; font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
+.vtop span { font-size: 11px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.vstate { font-size: 11px; color: var(--accent); }
+.strip { display: flex; flex-wrap: wrap; gap: 3px; }
+.strip i { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--line); background-size: cover; }
+.vact { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn.sm { padding: 5px 9px; font-size: 12px; }
+.btn.danger { color: #c8102e; border-color: #c8102e; }
+.foot { border-top: 1px solid var(--line); padding: 10px 12px; display: grid; gap: 8px; }
+.allrow { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.allrow { flex-direction: column; align-items: stretch; gap: 6px; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.actions .btn { flex: 1; }
+.toast { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+textarea#out { width: 100%; height: 90px; font: 12px ui-monospace, monospace; direction: ltr; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; }
+
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 52% 48%; }
+  .panel { border-left: none; border-top: 1px solid var(--line); }
+}
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+
+<div class="app">
+  <div class="stage">
+    <canvas id="c"></canvas>
+    <div class="views">
+      <button class="btn" data-view="persp">3D</button>
+      <button class="btn" data-view="front">חזית</button>
+      <button class="btn" data-view="top">תוכנית</button>
+      <button class="btn" data-view="side">צד</button>
+      <span class="sep"></span>
+      <button class="btn" id="undo" title="חזרה (Ctrl+Z)" disabled>↶ חזרה</button>
+      <button class="btn" id="redo" title="קדימה (Ctrl+Y)" disabled>קדימה ↷</button>
+    </div>
+    <div class="hint">גרירה לסיבוב · גלגלת לזום · לחיצה על אלמנט לבחירה</div>
+  </div>
+
+  <aside class="panel">
+    <div class="head">
+      <h1>Teddy Lab · פינת רחוב</h1>
+      <p>מודל חדש בהשראת רחוב ושוק בארה״ב. 500×250 ס״מ. לחצו על אלמנט ובחרו גימור.</p>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tabFin" aria-selected="true" aria-controls="paneFin">גימורים</button>
+      <button class="tab" role="tab" id="tabVer" aria-selected="false" aria-controls="paneVer">גרסאות</button>
+    </div>
+    <div class="pane" id="paneVer" role="tabpanel" hidden>
+      <div class="vsave">
+        <div class="inrow">
+          <input id="verName" placeholder="שם הגרסה, למשל: הצעה 2 · אדום-תכלת" maxlength="60" aria-label="שם הגרסה">
+          <button class="btn primary" id="verSave">שמור גרסה</button>
+        </div>
+        <div class="vnote" id="verNote">שומר את הגימורים הנוכחיים כגרסה חדשה בארכיון.</div>
+      </div>
+      <div class="list" id="verList"></div>
+    </div>
+    <div class="pane" id="paneFin" role="tabpanel">
+    <div class="list" id="list"></div>
+    <div class="foot">
+      <div class="allrow"><span>גימור אחד לכל האלמנטים</span><div class="sws" id="allSw"></div></div>
+      <div class="actions">
+        <button class="btn" id="copy">העתק רשימה</button>
+        <button class="btn" id="reset">איפוס</button>
+      </div>
+      <textarea id="out" readonly hidden aria-label="רשימת צבעים"></textarea>
+    </div>
+    </div>
+  </aside>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const DEFAULT = 'base';
+const STORE = 'teddylab-street-finish-v1';
+
+// ---------- finishes ----------
+function canvasTex(size, draw) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  draw(c.getContext('2d'), size); return c;
+}
+const checkerCanvas = canvasTex(256, (g, n) => {
+  g.fillStyle = '#f4f4f2'; g.fillRect(0, 0, n, n);
+  g.fillStyle = '#141414'; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
+});
+const skyCheckerCanvas = canvasTex(256, (g, n) => {
+  g.fillStyle = '#f7fafc'; g.fillRect(0, 0, n, n);
+  g.fillStyle = '#8db4d0'; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
+});
+const woodCanvas = (tones) => canvasTex(512, (g, n) => {
+  // 4 planks of 15cm across a 60cm tile, staggered butt joints
+  let k = 0; const pw = n / 4;
+  for (let i = 0; i < 4; i++) {
+    const off = [0, 0.5, 0.25, 0.75][i] * n;
+    for (let j = -1; j < 2; j++) {
+      const y0 = off + j * n; g.fillStyle = tones[(k++) % tones.length];
+      g.fillRect(i * pw, y0, pw, n);
+      g.strokeStyle = 'rgba(70,40,15,.18)'; g.lineWidth = 1;
+      for (let l = 0; l < 9; l++) { const x = i * pw + 6 + l * (pw - 12) / 8 + Math.sin(l * 7 + j) * 3; g.beginPath(); g.moveTo(x, y0); g.bezierCurveTo(x + 4, y0 + n * .3, x - 4, y0 + n * .6, x + 2, y0 + n); g.stroke(); }
+      g.fillStyle = 'rgba(60,35,15,.55)'; g.fillRect(i * pw, y0, pw, 2);
+    }
+    g.fillStyle = 'rgba(60,35,15,.55)'; g.fillRect(i * pw, 0, 2, n);
+  }
+});
+const concreteCanvas = canvasTex(512, (g, n) => {
+  // seamless polished-concrete: soft cloudy patches, fine grain, small pores (drawn with wraparound)
+  g.fillStyle = '#a6a49f'; g.fillRect(0, 0, n, n);
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const wrap = (fn) => { for (const dx of [-n, 0, n]) for (const dy of [-n, 0, n]) fn(dx, dy); };
+  for (let i = 0; i < 70; i++) {
+    const x = rnd() * n, y = rnd() * n, r = 30 + rnd() * 110, light = rnd() > 0.5;
+    const a = 0.04 + rnd() * 0.07;
+    wrap((dx, dy) => {
+      const gr = g.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r);
+      gr.addColorStop(0, light ? `rgba(255,255,250,${a})` : `rgba(60,58,55,${a})`);
+      gr.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gr; g.fillRect(x + dx - r, y + dy - r, r * 2, r * 2);
+    });
+  }
+  const img = g.getImageData(0, 0, n, n), d = img.data;
+  for (let i = 0; i < d.length; i += 4) { const v = (rnd() - 0.5) * 16; d[i] += v; d[i + 1] += v; d[i + 2] += v; }
+  g.putImageData(img, 0, 0);
+  for (let i = 0; i < 260; i++) {
+    const x = rnd() * n, y = rnd() * n, r = 0.6 + rnd() * 1.6;
+    g.fillStyle = `rgba(55,53,50,${0.25 + rnd() * 0.35})`;
+    wrap((dx, dy) => { g.beginPath(); g.arc(x + dx, y + dy, r, 0, Math.PI * 2); g.fill(); });
+  }
+});
+const blueCheckerCanvas = canvasTex(256, (g, n) => {
+  g.fillStyle = '#f7fafc'; g.fillRect(0, 0, n, n);
+  g.fillStyle = '#2a5da8'; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
+});
+const stripeCanvas = (c1, c2) => canvasTex(256, (g, n) => {
+  // vertical awning stripes: 2 bands per tile
+  g.fillStyle = c2; g.fillRect(0, 0, n, n);
+  g.fillStyle = c1; g.fillRect(0, 0, n / 2, n);
+});
+const stripesRedCanvas = stripeCanvas('#c8102e', '#f7f5f0');
+const stripesGreenCanvas = stripeCanvas('#2f7d4f', '#f7f5f0');
+const hazardCanvas = canvasTex(256, (g, n) => {
+  // 45° yellow/black hazard bands, tileable (2 black bands per tile)
+  g.fillStyle = '#f0c41b'; g.fillRect(0, 0, n, n);
+  g.fillStyle = '#1c1c1d';
+  for (let k = -2; k <= 2; k++) {
+    const o = k * n / 2;
+    g.beginPath(); g.moveTo(o, 0); g.lineTo(o + n / 4, 0); g.lineTo(o + n / 4 + n, n); g.lineTo(o + n, n); g.closePath(); g.fill();
+  }
+});
+const parquetCanvas = woodCanvas(['#b98a5a', '#c49766', '#ad7f50', '#c9a172', '#b58654', '#bf9161']);
+const darkWoodCanvas = woodCanvas(['#4a2f1e', '#563724', '#3f2819', '#5e3d27', '#4d321f', '#432a1b']);
+function makeTex(cv, periodCm) {
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8; t.repeat.set(1 / periodCm, 1 / periodCm); return t;
+}
+const FINISHES = {
+  base:    { he: 'בסיס (ללא)',        color: '#d4d2ce' },
+  black:   { he: 'שחור',              color: '#1c1c1d', roughness: 0.5 },
+  red:     { he: 'אדום תמרור',        color: '#c8102e' },
+  yellow:  { he: 'צהוב תמרור',        color: '#f0c41b' },
+  green:   { he: 'ירוק תמרור',        color: '#2f9450' },
+  blue:    { he: 'כחול תמרור',        color: '#2a5da8' },
+  sky:     { he: 'תכלת',              color: '#8db4d0' },
+  pink:    { he: 'ורוד בהיר',         color: '#f2b3bd' },
+  lilac:   { he: 'לילך',              color: '#b9a3dc' },
+  orange:  { he: 'כתום קונוס',        color: '#f26a1b' },
+  white:   { he: 'לבן',               color: '#f4f3ef' },
+  parquet: { he: 'פרקט',              color: '#ffffff', tex: makeTex(parquetCanvas, 60), roughness: 0.55, swatch: parquetCanvas },
+  darkWood:{ he: 'עץ כהה',           color: '#ffffff', tex: makeTex(darkWoodCanvas, 60), roughness: 0.5, swatch: darkWoodCanvas },
+  concrete:{ he: 'בטון',             color: '#ffffff', tex: makeTex(concreteCanvas, 120), roughness: 0.85, swatch: concreteCanvas },
+  skyChecker: { he: 'משבצות תכלת לבן', color: '#ffffff', tex: makeTex(skyCheckerCanvas, 30), roughness: 0.4, swatch: skyCheckerCanvas },
+  blueChecker: { he: 'משבצות כחול לבן', color: '#ffffff', tex: makeTex(blueCheckerCanvas, 30), roughness: 0.4, swatch: blueCheckerCanvas },
+  stripesRed: { he: 'פסי סוכך אדום לבן', color: '#ffffff', tex: makeTex(stripesRedCanvas, 40), roughness: 0.6, swatch: stripesRedCanvas },
+  stripesGreen: { he: 'פסי סוכך ירוק לבן', color: '#ffffff', tex: makeTex(stripesGreenCanvas, 40), roughness: 0.6, swatch: stripesGreenCanvas },
+  hazard: { he: 'פסי אזהרה צהוב שחור', color: '#ffffff', tex: makeTex(hazardCanvas, 30), roughness: 0.5, swatch: hazardCanvas },
+  checker: { he: 'משבצות שחור לבן',   color: '#ffffff', tex: makeTex(checkerCanvas, 30), roughness: 0.4, swatch: checkerCanvas },
+};
+const swatchCss = (k) => FINISHES[k].swatch ? `background-image:url(${FINISHES[k].swatch.toDataURL()});background-size:${/checker|stripes|hazard/i.test(k) ? '60%' : '100%'}` : `background:${FINISHES[k].color}`;
+
+// UVs in centimetres so textures keep real-world scale on every part
+function cmUV(geo) {
+  const pos = geo.attributes.position, nor = geo.attributes.normal, old = geo.attributes.uv;
+  const round = !geo.userData.planar && (geo.type === 'CylinderGeometry' || geo.type === 'LatheGeometry' || geo.type === 'TorusGeometry');
+  let R = 0; if (round) for (let i = 0; i < pos.count; i++) R = Math.max(R, Math.hypot(pos.getX(i), pos.getZ(i)));
+  const uv = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const ax = Math.abs(nor.getX(i)), ay = Math.abs(nor.getY(i)), az = Math.abs(nor.getZ(i));
+    let u, v;
+    if (round && ay < 0.7 && old) { u = old.getX(i) * 2 * Math.PI * R; v = y; }
+    else if (ay >= ax && ay >= az) { u = x; v = z; }
+    else if (ax >= az) { u = z; v = y; }
+    else { u = x; v = y; }
+    uv[i * 2] = u; uv[i * 2 + 1] = v;
+  }
+  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  return geo;
+}
+
+// Units: cm. Plan coords: x 0..500 (left→right as on plan), y 0..250 (back→front / mall side).
+// World: X = x-250, Z = y-125, Y = up.
+const W = (x) => x - 250, Z = (y) => y - 125;
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NoToneMapping;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 1, 5000);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI / 2 - 0.02;
+controls.minDistance = 120; controls.maxDistance = 2000;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0xb9b5ad, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(-260, 520, 420);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -420, right: 420, top: 420, bottom: -420, near: 10, far: 1500 });
+sun.shadow.bias = -0.0005;
+scene.add(sun);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -0.1; ground.receiveShadow = true;
+scene.add(ground);
+
+// ---------- element registry ----------
+const elements = [];
+const byId = {};
+function el(id, he, group, dims, opts = {}) {
+  const mat = new THREE.MeshStandardMaterial({ color: FINISHES.base.color, roughness: 0.65, metalness: 0, side: opts.double ? THREE.DoubleSide : THREE.FrontSide });
+  const g = new THREE.Group(); g.userData.elId = id; scene.add(g);
+  const e = { id, he, group, dims, mat, g, opacity: opts.opacity || false, defOp: opts.defOp ?? 1, defFin: opts.defFinish || DEFAULT, optional: !!opts.optional, visible: true, finish: DEFAULT };
+  elements.push(e); byId[id] = e; return e;
+}
+function add(e, geo, x, y, z, rot) {
+  const m = new THREE.Mesh(cmUV(geo), e.mat);
+  m.position.set(x, y, z);
+  if (rot) m.rotation.set(rot[0] || 0, rot[1] || 0, rot[2] || 0);
+  m.castShadow = true; m.receiveShadow = true; m.userData.elId = e.id;
+  e.g.add(m); return m;
+}
+// box from plan extents: x0..x1, y0..y1 (plan), h0..h1 (height)
+function box(e, x0, x1, y0, y1, h0, h1) {
+  return add(e, new THREE.BoxGeometry(x1 - x0, h1 - h0, y1 - y0), W((x0 + x1) / 2), (h0 + h1) / 2, Z((y0 + y1) / 2));
+}
+
+// ===== Street-corner layout · 500 × 250 cm, front (mall side) = y 250 =====
+// Plan: shop facade along the back · stands under a market awning · staff corner on the left
+// (machine + counter behind a street barricade) · open entrance with crosswalk · craft table front-right.
+const G1 = 'רצפה וחזית', G2 = 'מכונת המילוי', G3 = 'קופה ומחסום', G5 = 'שולחן יצירה ושרפרפים', G6 = 'רחוב';
+
+const floor = el('floor', 'רצפת המתחם', G1, '500 × 250', { defFinish: 'skyChecker' });
+box(floor, 0, 500, 0, 250, 0, 1.5);
+
+// Shop facade along the whole back edge
+const facade = el('facade', 'חזית חנות · קיר', G1, '500 × 10 · ג׳ 206', { defFinish: 'white' });
+box(facade, 0, 500, 0, 10, 1.5, 206);
+const facadeTrim = el('facadeTrim', 'חזית · כרכוב עליון', G1, '500 × 14 · ג׳ 206–220', { defFinish: 'red' });
+box(facadeTrim, 0, 500, 0, 14, 206, 220);
+const facadeBase = el('facadeBase', 'חזית · פס תחתון', G1, '500 × 12 · ג׳ 0–20', { defFinish: 'red' });
+box(facadeBase, 0, 500, 10, 12, 1.5, 20);
+const signBand = el('signBand', 'שלט חנות (ריק)', G1, '280 × 40 · מעל החזית', { defFinish: 'yellow' });
+box(signBand, 110, 390, 3, 11, 220, 260);
+const signFrame = el('signFrame', 'שלט חנות · מסגרת', G1, 'מסגרת 4 ס״מ', { defFinish: 'black' });
+box(signFrame, 106, 394, 2, 12, 260, 264); box(signFrame, 106, 110, 2, 12, 220, 260); box(signFrame, 390, 394, 2, 12, 220, 260);
+
+// Market awning over the stands
+const awn = el('awning', 'סוכך שוק', G1, '340 × 75 · ג׳ 170–200', { defFinish: 'stripesRed', double: true, optional: true });
+{
+  const x0 = 130, x1 = 470, yB = 10, yF = 82, hB = 200, hF = 170;
+  const len = Math.hypot(yF - yB, hB - hF), ang = Math.atan2(hB - hF, yF - yB);
+  add(awn, new THREE.BoxGeometry(x1 - x0, 1.2, len), W((x0 + x1) / 2), (hB + hF) / 2, Z((yB + yF) / 2), [ang, 0, 0]);
+  addWorld(awn, new THREE.BoxGeometry(x1 - x0, 12, 1.2).translate(W((x0 + x1) / 2), hF - 6, Z(yF)));
+  for (let x = x0 + 10; x < x1; x += 20) {
+    const g = new THREE.CylinderGeometry(10, 10, 1.2, 24, 1, false, -Math.PI / 2, Math.PI);
+    g.rotateX(Math.PI / 2); g.translate(W(x), hF - 12, Z(yF)); g.userData.planar = true;
+    addWorld(awn, g);
+  }
+}
+
+// Stuffing machine Ø70, h230 — staff corner, back-left
+const mx = W(58), mz = Z(62);
+const mBase = el('mBase', 'מכונת מילוי · בסיס', G2, 'Ø70 · ג׳ 0–90', { defFinish: 'blue' });
+add(mBase, new THREE.CylinderGeometry(35, 35, 88.5, 64), mx, 1.5 + 44.25, mz);
+const mDome = el('mDome', 'מכונת מילוי · כיפה', G2, 'Ø62 · ג׳ 90–182', { opacity: true, defOp: 0.45, double: true, defFinish: 'sky' });
+{
+  const pts = [];
+  pts.push(new THREE.Vector2(0, 0), new THREE.Vector2(33, 0), new THREE.Vector2(33, 3), new THREE.Vector2(31, 3));
+  pts.push(new THREE.Vector2(31, 52));
+  for (let i = 1; i <= 16; i++) { const t = i / 16 * Math.PI / 2; pts.push(new THREE.Vector2(11 + 20 * Math.cos(t), 52 + 38 * Math.sin(t))); }
+  pts.push(new THREE.Vector2(11, 92), new THREE.Vector2(0, 92));
+  add(mDome, new THREE.LatheGeometry(pts, 64), mx, 90, mz);
+}
+const mCap = el('mCap', 'מכונת מילוי · פקק', G2, 'Ø24 · ג׳ 182–190', { defFinish: 'white' });
+add(mCap, new THREE.CylinderGeometry(12, 12, 8, 48), mx, 186, mz);
+const mSign = el('mSign', 'מכונת מילוי · שלט עגול', G2, 'Ø45 · עד ג׳ 230', { defFinish: 'red' });
+add(mSign, new THREE.CylinderGeometry(22.5, 22.5, 4, 64), mx, 207.5, mz, [Math.PI / 2, 0, 0]);
+
+// Cashier counter 120×60 along the front, staff enter from the left side
+const counter = el('counter', 'דלפק קופה', G3, '120 × 60 · ג׳ 90', { defFinish: 'red' });
+box(counter, 40, 160, 175, 235, 10, 88);
+box(counter, 44, 156, 179, 229, 1.5, 10);
+const counterTop = el('counterTop', 'דלפק קופה · מלמעלה', G3, 'משטח עליון 120 × 60', { defFinish: 'white' });
+box(counterTop, 40, 160, 175, 235, 88, 90);
+
+// Street barricade (blocking fence) 110 long, from the counter back to the stands
+const barBoards = el('barBoards', 'מחסום רחוב · לוחות', G3, '110 × 2 לוחות · ג׳ 90', { defFinish: 'hazard' });
+const barLegs = el('barLegs', 'מחסום רחוב · רגליים', G3, 'רגלי A', { defFinish: 'white' });
+{
+  const x = 158, y0 = 65, y1 = 175;
+  box(barBoards, x - 1.5, x + 1.5, y0, y1, 70, 90);
+  box(barBoards, x - 1.5, x + 1.5, y0, y1, 38, 52);
+  for (const y of [y0 + 8, y1 - 8]) {
+    const leg = (dx) => add(barLegs, new THREE.BoxGeometry(4, 92, 4), W(x + dx * 7), 46, Z(y), [0, 0, dx * 0.15]);
+    leg(-1); leg(1);
+  }
+}
+
+// Stands 100×50, h110 — under the awning, open toward the booth
+function stand(n, x0, def) {
+  const f = el('stand' + n, `סטנד ${n} · מסגרת`, `סטנד ${n}`, '100 × 50 · ג׳ 110', { defFinish: def });
+  const i = el('stand' + n + 'in', `סטנד ${n} · מדפים`, `סטנד ${n}`, 'מדף אמצעי, תחתית', { defFinish: 'white' });
+  const bk = el('stand' + n + 'back', `סטנד ${n} · גב שקוף`, `סטנד ${n}`, 'אקריליק 94 × 105', { opacity: true, defOp: 0.2, double: true });
+  const t = 3, y0 = 10, y1 = 60;
+  box(f, x0, x0 + t, y0, y1, 1.5, 110);
+  box(f, x0 + 100 - t, x0 + 100, y0, y1, 1.5, 110);
+  box(f, x0 + t, x0 + 100 - t, y0, y1, 110 - t, 110);
+  box(f, x0 + t, x0 + 100 - t, y1 - 4, y1, 1.5, 10);
+  box(bk, x0 + t, x0 + 100 - t, y0, y0 + 1.5, 1.5, 110 - t);
+  box(i, x0 + t, x0 + 100 - t, y0 + 1.5, y1 - 4, 1.5, 12);
+  box(i, x0 + t, x0 + 100 - t, y0 + 1.5, y1, 57, 59.5);
+}
+stand(1, 140, 'blue'); stand(2, 250, 'red'); stand(3, 360, 'yellow');
+
+// Craft table — L shape 200×100, h70, front-right
+const tTop = el('tTop', 'שולחן יצירה · משטח', G5, '200 × 100 · ג׳ 70', { defFinish: 'sky' });
+{
+  const s = new THREE.Shape();
+  const p = (x, y) => [W(x), Z(y)];
+  s.moveTo(...p(320, 210));
+  s.lineTo(...p(452, 210));
+  s.quadraticCurveTo(...p(460, 210), ...p(460, 202));
+  s.lineTo(...p(460, 170));
+  s.absarc(W(480), Z(170), 20, Math.PI, 2 * Math.PI, false);
+  s.lineTo(...p(500, 200));
+  s.quadraticCurveTo(...p(500, 250), ...p(450, 250));
+  s.lineTo(...p(320, 250));
+  s.absarc(W(320), Z(230), 20, Math.PI / 2, 3 * Math.PI / 2, false);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: 3.5, bevelEnabled: false, curveSegments: 24 });
+  add(tTop, geo, 0, 70, 0, [Math.PI / 2, 0, 0]);
+}
+const tLegs = el('tLegs', 'שולחן יצירה · רגליים', G5, '8 × 8 · ג׳ 66.5', { defFinish: 'white' });
+for (const [x, y] of [[322, 230], [395, 230], [478, 232], [480, 172]]) box(tLegs, x - 4, x + 4, y - 4, y + 4, 1.5, 66.5);
+const sSeat = el('sSeat', 'שרפרפים · מושב', G5, 'Ø32 · ג׳ 45', { defFinish: 'red' });
+const sBase = el('sBase', 'שרפרפים · רגל ובסיס', G5, 'עמוד, טבעת רגליים, בסיס Ø30', { defFinish: 'black' });
+for (const x of [360, 400, 440]) {
+  const X = W(x), Zc = Z(187);
+  add(sSeat, new THREE.CylinderGeometry(16, 16, 4, 48), X, 43, Zc);
+  add(sBase, new THREE.CylinderGeometry(2.5, 2.5, 39.5, 20), X, 21.25, Zc);
+  add(sBase, new THREE.TorusGeometry(10, 1, 10, 40), X, 18, Zc, [Math.PI / 2, 0, 0]);
+  add(sBase, new THREE.CylinderGeometry(15, 15, 2, 48), X, 2.5, Zc);
+}
+
+// ---------- street furniture (each can be hidden) ----------
+function addWorld(e, geo) { return add(e, geo, 0, 0, 0); }
+
+// Crosswalk at the entrance between counter and table
+const xwalk = el('crosswalk', 'מעבר חצייה בכניסה', G6, '5 פסים 11 × 80', { optional: true, defFinish: 'white' });
+for (let i = 0; i < 5; i++) { const x = 176 + i * 22; box(xwalk, x, x + 11, 165, 247, 1.5, 1.8); }
+
+// Street lamp, back-right corner
+const lampPole = el('lampPole', 'פנס רחוב · עמוד', G6, 'Ø8 · ג׳ 270', { optional: true, defFinish: 'black' });
+const lampHead = el('lampHead', 'פנס רחוב · ראש', G6, '36 × 18', { optional: true, defFinish: 'yellow' });
+{
+  const X = W(482), Zc = Z(118);
+  add(lampPole, new THREE.CylinderGeometry(9, 11, 6, 24), X, 4.5, Zc);
+  add(lampPole, new THREE.CylinderGeometry(3, 4, 262, 20), X, 1.5 + 131, Zc);
+  add(lampPole, new THREE.BoxGeometry(46, 3, 3), X - 21, 262, Zc);
+  add(lampHead, new THREE.CylinderGeometry(6, 18, 14, 32), X - 40, 252, Zc);
+  add(lampHead, new THREE.SphereGeometry(6, 16, 10), X - 40, 260, Zc);
+}
+
+// US street-sign pole at the staff corner
+const sPole = el('signPole', 'עמוד תמרורים', G6, 'Ø6 · ג׳ 255', { optional: true, defFinish: 'base' });
+const sRound = el('signRound', 'תמרור עגול', G6, 'Ø45', { optional: true, defFinish: 'red' });
+const sBlades = el('signBlades', 'שלטי רחוב (חצים)', G6, '70 × 16', { optional: true, defFinish: 'green' });
+{
+  const px = 14, py = 150;
+  add(sPole, new THREE.CylinderGeometry(9, 9, 3, 24), W(px), 3, Z(py));
+  add(sPole, new THREE.CylinderGeometry(3, 3, 252, 20), W(px), 1.5 + 126, Z(py));
+  add(sRound, new THREE.CylinderGeometry(22.5, 22.5, 1.5, 48), W(px), 228, Z(py) + 4, [Math.PI / 2, 0, 0]);
+  const blade = () => {
+    const sh = new THREE.Shape();
+    sh.moveTo(0, -8); sh.lineTo(62, -8); sh.lineTo(70, 0); sh.lineTo(62, 8); sh.lineTo(0, 8); sh.closePath();
+    return new THREE.ExtrudeGeometry(sh, { depth: 1.5, bevelEnabled: false }).translate(0, 0, -0.75);
+  };
+  add(sBlades, blade(), W(px) + 3, 192, Z(py));
+  add(sBlades, blade(), W(px), 174, Z(py) + 3, [0, -Math.PI / 2, 0]);
+}
+
+// Traffic light on the counter's right end, facing the mall
+const tlBody = el('tlBody', 'רמזור · גוף', G6, '20 × 18 × 58', { optional: true, defFinish: 'yellow' });
+const tlR = el('tlRed', 'רמזור · אור עליון', G6, 'Ø12', { optional: true, defFinish: 'red' });
+const tlY = el('tlYellow', 'רמזור · אור אמצעי', G6, 'Ø12', { optional: true, defFinish: 'yellow' });
+const tlG = el('tlGreen', 'רמזור · אור תחתון', G6, 'Ø12', { optional: true, defFinish: 'green' });
+{
+  const cx = 146, cy = 186;
+  box(tlBody, cx - 10, cx + 10, cy - 9, cy + 9, 90, 148);
+  for (const [e, h] of [[tlR, 136], [tlY, 119], [tlG, 102]]) {
+    add(e, new THREE.CylinderGeometry(6, 6, 2, 32), W(cx), h, Z(cy + 9) + 1, [Math.PI / 2, 0, 0]);
+    add(tlBody, new THREE.CylinderGeometry(7.5, 7.5, 6, 32, 1, true, -Math.PI / 2, Math.PI), W(cx), h + 1, Z(cy + 9) + 3, [Math.PI / 2, 0, 0]);
+  }
+}
+
+// Traffic cones flanking the entrance
+const cBody = el('coneBody', 'קונוסים · גוף', G6, 'Ø18 · ג׳ 45', { optional: true, defFinish: 'orange' });
+const cBand = el('coneBands', 'קונוסים · פסים', G6, '2 טבעות', { optional: true, defFinish: 'white' });
+const cBase = el('coneBase', 'קונוסים · בסיס', G6, '26 × 26', { optional: true, defFinish: 'black' });
+for (const [x, y] of [[178, 150], [288, 140]]) {
+  const X = W(x), Zc = Z(y);
+  add(cBase, new THREE.BoxGeometry(26, 2.5, 26), X, 2.75, Zc);
+  add(cBody, new THREE.CylinderGeometry(1.8, 9, 42, 32), X, 4 + 21, Zc);
+  for (const h of [16, 28]) { const r = 9 - (h - 4) / 42 * 7.2; add(cBand, new THREE.CylinderGeometry(r - 0.4, r + 0.6, 5, 32, 1, true), X, h, Zc); }
+}
+
+// Fire hydrant in front of stand 2
+const hyd = el('hydrant', 'ברז כיבוי', G6, 'Ø22 · ג׳ 60', { optional: true, defFinish: 'red' });
+const hydCap = el('hydrantCap', 'ברז כיבוי · כובע ופיות', G6, '', { optional: true, defFinish: 'white' });
+{
+  const X = W(300), Zc = Z(92);
+  add(hyd, new THREE.CylinderGeometry(14, 14, 5, 32), X, 4, Zc);
+  add(hyd, new THREE.CylinderGeometry(10, 11, 44, 32), X, 6.5 + 22, Zc);
+  add(hydCap, new THREE.SphereGeometry(11, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), X, 50.5, Zc);
+  add(hydCap, new THREE.CylinderGeometry(2.5, 2.5, 5, 12), X, 63, Zc);
+  for (const r of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
+    add(hydCap, new THREE.CylinderGeometry(4, 4, 8, 20), X + Math.sin(r) * 12, 36, Zc + Math.cos(r) * 12, [Math.PI / 2, r, 0]);
+  }
+}
+
+// ---------- selection outline ----------
+const selBox = new THREE.Box3Helper(new THREE.Box3(), 0x2f6fb3);
+selBox.visible = false; scene.add(selBox);
+let selected = null;
+function select(id, scroll) {
+  selected = id;
+  document.querySelectorAll('.row').forEach(r => r.classList.toggle('sel', r.dataset.id === id));
+  if (!id) { selBox.visible = false; return; }
+  selBox.box.setFromObject(byId[id].g).expandByScalar(1.5);
+  selBox.visible = true;
+  if (scroll) document.querySelector(`.row[data-id="${id}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+// ---------- state ----------
+function load() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; } }
+function snap() { const o = {}; for (const e of elements) o[e.id] = e.optional ? { f: e.finish, o: e.mat.opacity, v: e.visible } : { f: e.finish, o: e.mat.opacity }; return o; }
+function persist(o) { try { localStorage.setItem(STORE, JSON.stringify(o)); } catch {} }
+// Undo/redo: every committed change pushes a snapshot
+const hist = []; let hi = -1; let onChange = null;
+function save() {
+  const o = snap(), s = JSON.stringify(o);
+  if (hi >= 0 && JSON.stringify(hist[hi]) === s) return;
+  hist.length = hi + 1; hist.push(o); hi = hist.length - 1;
+  persist(o); updHist(); onChange && onChange();
+}
+function applySnap(o) {
+  for (const e of elements) { const s = o[e.id]; if (!s) continue; setFinish(e, s.f, false); if (e.opacity) setOpacity(e, s.o, false); if (e.optional) setVisible(e, s.v !== false, false); }
+  persist(o); updHist(); if (selected) select(selected); onChange && onChange();
+}
+function undo() { if (hi > 0) { hi--; applySnap(hist[hi]); } }
+function redo() { if (hi < hist.length - 1) { hi++; applySnap(hist[hi]); } }
+function updHist() {
+  const u = document.getElementById('undo'), r = document.getElementById('redo');
+  if (u) u.disabled = hi <= 0; if (r) r.disabled = hi >= hist.length - 1;
+}
+function setFinish(e, k, persist = true) {
+  const f = FINISHES[k]; if (!f) return;
+  e.finish = k; e.mat.color.set(f.color); e.mat.map = f.tex || null;
+  e.mat.roughness = f.roughness ?? 0.65; e.mat.needsUpdate = true;
+  document.querySelectorAll(`.row[data-id="${e.id}"] .sw`).forEach(b => { const on = b.dataset.f === k; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+  if (persist) save();
+}
+function setVisible(e, v, persist = true) {
+  e.visible = v; e.g.visible = v;
+  const cb = document.querySelector(`.row[data-id="${e.id}"] .vis input`); if (cb) cb.checked = v;
+  document.querySelector(`.row[data-id="${e.id}"]`)?.classList.toggle('off', !v);
+  if (!v && selected === e.id) select(null);
+  if (persist) save();
+}
+function setOpacity(e, v, persist = true) {
+  e.mat.opacity = v; e.mat.transparent = v < 1; e.mat.depthWrite = v >= 1; e.mat.needsUpdate = true;
+  e.g.traverse(m => { if (m.isMesh) m.castShadow = v > 0.6; });
+  const r = document.querySelector(`.row[data-id="${e.id}"] .op input`); if (r) r.value = v;
+  if (persist) save();
+}
+
+// ---------- panel ----------
+const list = document.getElementById('list');
+let lastGroup = null;
+for (const e of elements) {
+  if (e.group !== lastGroup) { const gdiv = document.createElement('div'); gdiv.className = 'group'; gdiv.textContent = e.group; list.appendChild(gdiv); lastGroup = e.group; }
+  const row = document.createElement('div');
+  row.className = 'row'; row.dataset.id = e.id;
+  const sws = Object.keys(FINISHES).map(k => `<button class="sw" data-f="${k}" style="${swatchCss(k)}" title="${FINISHES[k].he}" aria-label="${e.he}: ${FINISHES[k].he}" aria-pressed="false"></button>`).join('');
+  row.innerHTML = `
+    <div class="nrow"><div class="name"><b>${e.he}</b><span>${e.dims}</span></div>${e.optional ? `<label class="vis"><input type="checkbox" id="v-${e.id}" checked> מוצג</label>` : ''}</div>
+    <div class="sws">${sws}</div>
+    ${e.opacity ? `<div class="op"><span>שקיפות</span><input type="range" id="o-${e.id}" min="0.15" max="1" step="0.05" value="1" aria-label="אטימות ${e.he}"></div>` : ''}`;
+  list.appendChild(row);
+  row.querySelectorAll('.sw').forEach(b => b.addEventListener('click', () => { setFinish(e, b.dataset.f); select(e.id); }));
+  row.querySelector('.name').addEventListener('click', () => select(e.id));
+  row.querySelector('.vis input')?.addEventListener('change', ev => setVisible(e, ev.target.checked));
+  row.querySelector('.op input')?.addEventListener('input', ev => setOpacity(e, +ev.target.value, false));
+  row.querySelector('.op input')?.addEventListener('change', () => save());
+}
+
+for (const e of elements) { setFinish(e, e.defFin, false); if (e.opacity) setOpacity(e, e.defOp, false); }
+const saved = load();
+for (const e of elements) { const s = saved[e.id]; if (s) { if (s.f) setFinish(e, s.f, false); if (s.o != null && e.opacity) setOpacity(e, s.o, false); if (e.optional && s.v === false) setVisible(e, false, false); } }
+save();
+document.getElementById('undo').addEventListener('click', undo);
+document.getElementById('redo').addEventListener('click', redo);
+addEventListener('keydown', ev => {
+  if (!(ev.ctrlKey || ev.metaKey)) return;
+  const k = ev.key.toLowerCase();
+  if (k === 'z' && !ev.shiftKey) { ev.preventDefault(); undo(); }
+  else if (k === 'y' || (k === 'z' && ev.shiftKey)) { ev.preventDefault(); redo(); }
+});
+
+const allSw = document.getElementById('allSw');
+allSw.innerHTML = Object.keys(FINISHES).map(k => `<button class="sw" data-f="${k}" style="${swatchCss(k)}" title="${FINISHES[k].he}" aria-label="הכל: ${FINISHES[k].he}"></button>`).join('');
+allSw.querySelectorAll('.sw').forEach(b => b.addEventListener('click', () => { for (const e of elements) setFinish(e, b.dataset.f, false); save(); toast('הוחל על כל האלמנטים: ' + FINISHES[b.dataset.f].he); }));
+document.getElementById('reset').addEventListener('click', () => {
+  for (const e of elements) { setFinish(e, e.defFin, false); if (e.opacity) setOpacity(e, e.defOp, false); if (e.optional) setVisible(e, true, false); }
+  save(); toast('הגימורים אופסו');
+});
+document.getElementById('copy').addEventListener('click', () => {
+  const txt = elements.filter(e => e.visible).map(e => `${e.he}: ${FINISHES[e.finish].he}`).join('\n');
+  const out = document.getElementById('out');
+  navigator.clipboard.writeText(txt).then(() => toast('הרשימה הועתקה')).catch(() => {
+    out.hidden = false; out.value = txt; out.select(); toast('סמנו והעתיקו את הטקסט');
+  });
+});
+// ---------- versions archive ----------
+// Shared via the artifact's db when available; falls back to this browser only.
+const verList = document.getElementById('verList'), verName = document.getElementById('verName'), verNote = document.getElementById('verNote');
+const LOCALV = 'teddylab-street-versions-v1';
+let versions = [], activeVer = null, store = null, armedDel = null;
+const localV = {
+  all() { try { return JSON.parse(localStorage.getItem(LOCALV)) || []; } catch { return []; } },
+  write(a) { try { localStorage.setItem(LOCALV, JSON.stringify(a)); } catch {} },
+};
+const fmt = (t) => t ? new Date(t).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+const sameAsNow = (v) => JSON.stringify(Object.fromEntries(elements.map(e => [e.id, v.finishes?.[e.id]?.f || 'base']))) === JSON.stringify(Object.fromEntries(elements.map(e => [e.id, e.finish])));
+function renderVers() {
+  verList.innerHTML = '';
+  if (!versions.length) {
+    verList.innerHTML = '<p class="empty">עוד אין גרסאות בארכיון. בחרו גימורים, תנו שם למעלה ולחצו "שמור גרסה". אפשר לשמור כמה הצעות ולעבור ביניהן.</p>';
+    return;
+  }
+  for (const v of versions) {
+    const card = document.createElement('div');
+    const isActive = v.id === activeVer;
+    card.className = 'ver' + (isActive ? ' on' : '');
+    const strip = elements.map(e => { const k = FINISHES[v.finishes?.[e.id]?.f] ? v.finishes[e.id].f : 'base'; return `<i style="${swatchCss(k)}" title="${e.he}: ${FINISHES[k].he}"></i>`; }).join('');
+    const state = isActive ? (sameAsNow(v) ? 'מוצגת עכשיו' : 'מוצגת עכשיו · יש שינויים שלא נשמרו') : '';
+    card.innerHTML = `<div class="vtop"><b></b><span>${fmt(v.updatedAt || v.createdAt)}</span></div>
+      ${state ? `<div class="vstate">${state}</div>` : ''}
+      <div class="strip">${strip}</div>
+      <div class="vact">
+        <button class="btn sm" data-a="load">טען</button>
+        <button class="btn sm" data-a="over">עדכן לגימורים הנוכחיים</button>
+        <button class="btn sm${armedDel === v.id ? ' danger' : ''}" data-a="del">${armedDel === v.id ? 'ללחוץ שוב למחיקה' : 'מחק'}</button>
+      </div>`;
+    card.querySelector('b').textContent = v.name || 'ללא שם';
+    card.querySelector('[data-a=load]').addEventListener('click', () => loadVer(v));
+    card.querySelector('[data-a=over]').addEventListener('click', () => overVer(v));
+    card.querySelector('[data-a=del]').addEventListener('click', () => {
+      if (armedDel !== v.id) { armedDel = v.id; renderVers(); setTimeout(() => { if (armedDel === v.id) { armedDel = null; renderVers(); } }, 4000); return; }
+      armedDel = null; delVer(v);
+    });
+    verList.appendChild(card);
+  }
+}
+onChange = renderVers;
+const fail = (err) => { console.warn(err); toast(err?.code === 'quota_exceeded' ? 'הארכיון מלא, מחקו גרסאות ישנות' : 'לא נשמר. ייתכן שאין לך הרשאת עריכה לדף'); };
+async function addVer() {
+  const name = verName.value.trim() || `גרסה ${versions.length + 1}`;
+  const now = Date.now();
+  const doc = { name, finishes: snap(), createdAt: now, updatedAt: now };
+  try {
+    if (store) { const ref = store.collection('versions').doc(); activeVer = ref.id; await ref.set(doc); }
+    else { const id = 'v' + now; activeVer = id; versions.unshift({ id, ...doc }); localV.write(versions); renderVers(); }
+    verName.value = ''; toast('נשמר: ' + name);
+  } catch (err) { fail(err); }
+}
+async function overVer(v) {
+  const d = { finishes: snap(), updatedAt: Date.now() };
+  try {
+    if (store) await store.doc('versions/' + v.id).update(d);
+    else { Object.assign(v, d); localV.write(versions); }
+    activeVer = v.id; renderVers(); toast('עודכן: ' + (v.name || ''));
+  } catch (err) { fail(err); }
+}
+async function delVer(v) {
+  try {
+    if (store) await store.doc('versions/' + v.id).delete();
+    else { versions = versions.filter(x => x !== v); localV.write(versions); }
+    if (activeVer === v.id) activeVer = null; renderVers(); toast('נמחק: ' + (v.name || ''));
+  } catch (err) { fail(err); }
+}
+function loadVer(v) {
+  for (const e of elements) {
+    const s = v.finishes?.[e.id];
+    setFinish(e, s && FINISHES[s.f] ? s.f : (s ? 'base' : e.defFin), false);
+    if (e.opacity) setOpacity(e, s?.o ?? e.defOp, false);
+    if (e.optional) setVisible(e, s?.v !== false, false);
+  }
+  activeVer = v.id; save(); renderVers(); toast('נטען: ' + (v.name || ''));
+}
+document.getElementById('verSave').addEventListener('click', addVer);
+verName.addEventListener('keydown', ev => { if (ev.key === 'Enter') addVer(); });
+
+versions = localV.all(); renderVers();
+verNote.textContent = 'שומר את הגימורים הנוכחיים כגרסה חדשה. כרגע הארכיון נשמר בדפדפן הזה בלבד.';
+(async () => {
+  const db = await window.claude?.use?.('db');
+  if (!db) return;
+  store = db;
+  verNote.textContent = 'שומר את הגימורים הנוכחיים כגרסה חדשה. הארכיון נשמר עם הדף, וכל מי שהדף משותף איתו רואה אותו.';
+  const slow = setTimeout(() => { verNote.textContent = 'הארכיון עוד לא נטען, ייתכן שאין חיבור.'; }, 10000);
+  db.collection('versions').orderBy('createdAt', 'desc').onSnapshot(snapq => {
+    if (!snapq.metadata.fromCache) clearTimeout(slow);
+    versions = snapq.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderVers();
+  }, err => { clearTimeout(slow); console.warn(err); verNote.textContent = 'לא ניתן לטעון את הארכיון כרגע.'; });
+})();
+
+// tabs
+const tabs = { tabFin: 'paneFin', tabVer: 'paneVer' };
+for (const [t, pn] of Object.entries(tabs)) document.getElementById(t).addEventListener('click', () => {
+  for (const [t2, p2] of Object.entries(tabs)) { document.getElementById(t2).setAttribute('aria-selected', t2 === t); document.getElementById(p2).hidden = t2 !== t; }
+  if (t === 'tabVer') renderVers();
+});
+
+let tt; function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 1800); }
+
+// ---------- picking ----------
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+let down = null;
+canvas.addEventListener('pointerdown', ev => { down = [ev.clientX, ev.clientY]; });
+canvas.addEventListener('pointerup', ev => {
+  if (!down || Math.hypot(ev.clientX - down[0], ev.clientY - down[1]) > 5) return;
+  const r = canvas.getBoundingClientRect();
+  ptr.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+  const hits = ray.intersectObjects(elements.map(e => e.g), true);
+  select(hits.length ? hits[0].object.userData.elId : null, true);
+});
+
+// ---------- views ----------
+const views = {
+  persp: [[360, 340, 640], [0, 80, 0]],
+  front: [[0, 110, 720], [0, 100, 0]],
+  top:   [[0, 900, 0.01], [0, 0, 0]],
+  side:  [[760, 120, 0], [0, 90, 0]],
+};
+function setView(k) {
+  const [p, t] = views[k]; camera.position.set(...p); controls.target.set(...t); controls.update();
+  document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === k));
+}
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+setView('persp');
+
+// ---------- theme / resize / loop ----------
+function applyScene() {
+  const c = getComputedStyle(document.documentElement).getPropertyValue('--scene').trim() || '#e6e4e0';
+  scene.background = new THREE.Color(c); ground.material.color.set(c);
+}
+applyScene();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyScene);
+new MutationObserver(applyScene).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== Math.floor(w * renderer.getPixelRatio()) || canvas.height !== Math.floor(h * renderer.getPixelRatio())) {
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+}
+renderer.setAnimationLoop(() => { resize(); controls.update(); renderer.render(scene, camera); });
+</script>
