@@ -80,7 +80,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); overfl
 .strip i { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--line); background-size: cover; }
 .vact { display: flex; gap: 6px; flex-wrap: wrap; }
 .btn.sm { padding: 5px 9px; font-size: 12px; }
-.btn.danger { color: #c8102e; border-color: #c8102e; }
+.btn.danger { color: #e01e1c; border-color: #e01e1c; }
 .foot { border-top: 1px solid var(--line); padding: 10px 12px; display: grid; gap: 8px; }
 .allrow { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .allrow { flex-direction: column; align-items: stretch; gap: 6px; }
@@ -170,7 +170,7 @@ const checkerCanvas = canvasTex(256, (g, n) => {
 });
 const skyCheckerCanvas = canvasTex(256, (g, n) => {
   g.fillStyle = '#f7fafc'; g.fillRect(0, 0, n, n);
-  g.fillStyle = '#8db4d0'; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
+  g.fillStyle = '#7abbeb'; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
 });
 const woodCanvas = (tones) => canvasTex(512, (g, n) => {
   // 4 planks of 15cm across a 60cm tile, staggered butt joints
@@ -213,18 +213,18 @@ const concreteCanvas = canvasTex(512, (g, n) => {
 });
 const blueCheckerCanvas = canvasTex(256, (g, n) => {
   g.fillStyle = '#f7fafc'; g.fillRect(0, 0, n, n);
-  g.fillStyle = '#2a5da8'; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
+  g.fillStyle = '#0a56ac'; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
 });
 const stripeCanvas = (c1, c2) => canvasTex(256, (g, n) => {
   // vertical awning stripes: 2 bands per tile
   g.fillStyle = c2; g.fillRect(0, 0, n, n);
   g.fillStyle = c1; g.fillRect(0, 0, n / 2, n);
 });
-const stripesRedCanvas = stripeCanvas('#c8102e', '#f7f5f0');
-const stripesGreenCanvas = stripeCanvas('#2f7d4f', '#f7f5f0');
+const stripesRedCanvas = stripeCanvas('#e01e1c', '#f7f5f0');
+const stripesGreenCanvas = stripeCanvas('#0a7440', '#f7f5f0');
 const hazardCanvas = canvasTex(256, (g, n) => {
   // 45° yellow/black hazard bands, tileable (2 black bands per tile)
-  g.fillStyle = '#f0c41b'; g.fillRect(0, 0, n, n);
+  g.fillStyle = '#f5b303'; g.fillRect(0, 0, n, n);
   g.fillStyle = '#1c1c1d';
   for (let k = -2; k <= 2; k++) {
     const o = k * n / 2;
@@ -233,7 +233,7 @@ const hazardCanvas = canvasTex(256, (g, n) => {
 });
 const tileRedCanvas = canvasTex(256, (g, n) => {
   // one 15cm glossy white tile, red grout ~6mm (half on each edge so it tiles)
-  g.fillStyle = '#c8102e'; g.fillRect(0, 0, n, n);
+  g.fillStyle = '#e01e1c'; g.fillRect(0, 0, n, n);
   const gw = 8; g.fillStyle = '#f6f5f1'; g.fillRect(gw, gw, n - 2 * gw, n - 2 * gw);
   const gr = g.createLinearGradient(0, 0, n, n); gr.addColorStop(0, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(0,0,0,.04)');
   g.fillStyle = gr; g.fillRect(gw, gw, n - 2 * gw, n - 2 * gw);
@@ -248,12 +248,12 @@ function makeTex(cv, periodCm) {
 const FINISHES = {
   base:    { he: 'בסיס (ללא)',        color: '#d4d2ce' },
   black:   { he: 'שחור',              color: '#1c1c1d', roughness: 0.5 },
-  red:     { he: 'אדום תמרור',        color: '#c8102e' },
-  yellow:  { he: 'צהוב תמרור',        color: '#f0c41b' },
-  green:   { he: 'ירוק תמרור',        color: '#2f9450' },
-  blue:    { he: 'כחול תמרור',        color: '#2a5da8' },
-  sky:     { he: 'תכלת',              color: '#8db4d0' },
-  pink:    { he: 'ורוד בהיר',         color: '#f2b3bd' },
+  red:     { he: 'אדום תמרור',        color: '#e01e1c' },
+  yellow:  { he: 'צהוב תמרור',        color: '#f5b303' },
+  green:   { he: 'ירוק תמרור',        color: '#0a7440' },
+  blue:    { he: 'כחול תמרור',        color: '#0a56ac' },
+  sky:     { he: 'תכלת',              color: '#7abbeb' },
+  pink:    { he: 'ורוד בהיר',         color: '#f4a6d6' },
   lilac:   { he: 'לילך',              color: '#b9a3dc' },
   orange:  { he: 'כתום קונוס',        color: '#f26a1b' },
   white:   { he: 'לבן',               color: '#f4f3ef' },
