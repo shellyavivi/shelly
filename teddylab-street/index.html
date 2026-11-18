@@ -234,7 +234,7 @@ const hazardCanvas = canvasTex(256, (g, n) => {
 const tileRedCanvas = canvasTex(256, (g, n) => {
   // one 15cm glossy white tile, red grout ~6mm (half on each edge so it tiles)
   g.fillStyle = '#c8102e'; g.fillRect(0, 0, n, n);
-  const gw = 5; g.fillStyle = '#f6f5f1'; g.fillRect(gw, gw, n - 2 * gw, n - 2 * gw);
+  const gw = 8; g.fillStyle = '#f6f5f1'; g.fillRect(gw, gw, n - 2 * gw, n - 2 * gw);
   const gr = g.createLinearGradient(0, 0, n, n); gr.addColorStop(0, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(0,0,0,.04)');
   g.fillStyle = gr; g.fillRect(gw, gw, n - 2 * gw, n - 2 * gw);
 });
