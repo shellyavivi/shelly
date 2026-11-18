@@ -45,9 +45,6 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); overfl
 .row { display: grid; grid-template-columns: minmax(0,1fr); align-items: center; gap: 6px; padding: 7px 8px; border-radius: 8px; border: 1px solid transparent; }
 .row.sel { background: var(--accent-soft); border-color: var(--accent); }
 .name { min-width: 0; cursor: pointer; }
-.nrow { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.vis { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); white-space: nowrap; cursor: pointer; }
-.row.off .sws, .row.off .name { opacity: .4; }
 .name b { display: block; font-size: 14px; font-weight: 500; }
 .name span { display: block; font-size: 11px; color: var(--muted); direction: ltr; text-align: right; font-variant-numeric: tabular-nums; }
 .sws { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -215,22 +212,6 @@ const blueCheckerCanvas = canvasTex(256, (g, n) => {
   g.fillStyle = '#f7fafc'; g.fillRect(0, 0, n, n);
   g.fillStyle = '#2a5da8'; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
 });
-const stripeCanvas = (c1, c2) => canvasTex(256, (g, n) => {
-  // vertical awning stripes: 2 bands per tile
-  g.fillStyle = c2; g.fillRect(0, 0, n, n);
-  g.fillStyle = c1; g.fillRect(0, 0, n / 2, n);
-});
-const stripesRedCanvas = stripeCanvas('#c8102e', '#f7f5f0');
-const stripesGreenCanvas = stripeCanvas('#2f7d4f', '#f7f5f0');
-const hazardCanvas = canvasTex(256, (g, n) => {
-  // 45° yellow/black hazard bands, tileable (2 black bands per tile)
-  g.fillStyle = '#f0c41b'; g.fillRect(0, 0, n, n);
-  g.fillStyle = '#1c1c1d';
-  for (let k = -2; k <= 2; k++) {
-    const o = k * n / 2;
-    g.beginPath(); g.moveTo(o, 0); g.lineTo(o + n / 4, 0); g.lineTo(o + n / 4 + n, n); g.lineTo(o + n, n); g.closePath(); g.fill();
-  }
-});
 const parquetCanvas = woodCanvas(['#b98a5a', '#c49766', '#ad7f50', '#c9a172', '#b58654', '#bf9161']);
 const darkWoodCanvas = woodCanvas(['#4a2f1e', '#563724', '#3f2819', '#5e3d27', '#4d321f', '#432a1b']);
 function makeTex(cv, periodCm) {
@@ -247,25 +228,19 @@ const FINISHES = {
   blue:    { he: 'כחול תמרור',        color: '#2a5da8' },
   sky:     { he: 'תכלת',              color: '#8db4d0' },
   pink:    { he: 'ורוד בהיר',         color: '#f2b3bd' },
-  lilac:   { he: 'לילך',              color: '#b9a3dc' },
-  orange:  { he: 'כתום קונוס',        color: '#f26a1b' },
-  white:   { he: 'לבן',               color: '#f4f3ef' },
   parquet: { he: 'פרקט',              color: '#ffffff', tex: makeTex(parquetCanvas, 60), roughness: 0.55, swatch: parquetCanvas },
   darkWood:{ he: 'עץ כהה',           color: '#ffffff', tex: makeTex(darkWoodCanvas, 60), roughness: 0.5, swatch: darkWoodCanvas },
   concrete:{ he: 'בטון',             color: '#ffffff', tex: makeTex(concreteCanvas, 120), roughness: 0.85, swatch: concreteCanvas },
   skyChecker: { he: 'משבצות תכלת לבן', color: '#ffffff', tex: makeTex(skyCheckerCanvas, 30), roughness: 0.4, swatch: skyCheckerCanvas },
   blueChecker: { he: 'משבצות כחול לבן', color: '#ffffff', tex: makeTex(blueCheckerCanvas, 30), roughness: 0.4, swatch: blueCheckerCanvas },
-  stripesRed: { he: 'פסי סוכך אדום לבן', color: '#ffffff', tex: makeTex(stripesRedCanvas, 40), roughness: 0.6, swatch: stripesRedCanvas },
-  stripesGreen: { he: 'פסי סוכך ירוק לבן', color: '#ffffff', tex: makeTex(stripesGreenCanvas, 40), roughness: 0.6, swatch: stripesGreenCanvas },
-  hazard: { he: 'פסי אזהרה צהוב שחור', color: '#ffffff', tex: makeTex(hazardCanvas, 30), roughness: 0.5, swatch: hazardCanvas },
   checker: { he: 'משבצות שחור לבן',   color: '#ffffff', tex: makeTex(checkerCanvas, 30), roughness: 0.4, swatch: checkerCanvas },
 };
-const swatchCss = (k) => FINISHES[k].swatch ? `background-image:url(${FINISHES[k].swatch.toDataURL()});background-size:${/checker|stripes|hazard/i.test(k) ? '60%' : '100%'}` : `background:${FINISHES[k].color}`;
+const swatchCss = (k) => FINISHES[k].swatch ? `background-image:url(${FINISHES[k].swatch.toDataURL()});background-size:${/checker/i.test(k) ? '60%' : '100%'}` : `background:${FINISHES[k].color}`;
 
 // UVs in centimetres so textures keep real-world scale on every part
 function cmUV(geo) {
   const pos = geo.attributes.position, nor = geo.attributes.normal, old = geo.attributes.uv;
-  const round = !geo.userData.planar && (geo.type === 'CylinderGeometry' || geo.type === 'LatheGeometry' || geo.type === 'TorusGeometry');
+  const round = geo.type === 'CylinderGeometry' || geo.type === 'LatheGeometry' || geo.type === 'TorusGeometry';
   let R = 0; if (round) for (let i = 0; i < pos.count; i++) R = Math.max(R, Math.hypot(pos.getX(i), pos.getZ(i)));
   const uv = new Float32Array(pos.count * 2);
   for (let i = 0; i < pos.count; i++) {
@@ -320,7 +295,7 @@ const byId = {};
 function el(id, he, group, dims, opts = {}) {
   const mat = new THREE.MeshStandardMaterial({ color: FINISHES.base.color, roughness: 0.65, metalness: 0, side: opts.double ? THREE.DoubleSide : THREE.FrontSide });
   const g = new THREE.Group(); g.userData.elId = id; scene.add(g);
-  const e = { id, he, group, dims, mat, g, opacity: opts.opacity || false, defOp: opts.defOp ?? 1, defFin: opts.defFinish || DEFAULT, optional: !!opts.optional, visible: true, finish: DEFAULT };
+  const e = { id, he, group, dims, mat, g, opacity: opts.opacity || false, defOp: opts.defOp ?? 1, finish: DEFAULT };
   elements.push(e); byId[id] = e; return e;
 }
 function add(e, geo, x, y, z, rot) {
@@ -422,75 +397,6 @@ for (const x of [360, 400, 440]) {
   add(sBase, new THREE.CylinderGeometry(15, 15, 2, 48), X, 2.5, Zc);
 }
 
-// ---------- street & market props (optional, each can be hidden) ----------
-const SP = 'תוספות רחוב ושוק';
-// add a geometry already placed in world space (keeps stripes/tiles continuous across pieces)
-function addWorld(e, geo) { return add(e, geo, 0, 0, 0); }
-
-// Market awning over the three stands, sloping toward the booth
-const awn = el('awning', 'סוכך שוק', SP, '320 × 70 · ג׳ 205–240', { optional: true, defFinish: 'stripesRed', double: true });
-const awnPost = el('awningPosts', 'סוכך · עמודים', SP, 'Ø5 · ג׳ 245', { optional: true, defFinish: 'white' });
-{
-  const x0 = 180, x1 = 500, yB = 2, yF = 72, hB = 240, hF = 205;
-  const len = Math.hypot(yF - yB, hB - hF), ang = Math.atan2(hB - hF, yF - yB);
-  add(awn, new THREE.BoxGeometry(x1 - x0, 1.2, len), W((x0 + x1) / 2), (hB + hF) / 2, Z((yB + yF) / 2), [ang, 0, 0]);
-  // front valance with scallops
-  addWorld(awn, new THREE.BoxGeometry(x1 - x0, 12, 1.2).translate(W((x0 + x1) / 2), hF - 6, Z(yF)));
-  for (let x = x0 + 10; x < x1; x += 20) {
-    const geo = new THREE.CylinderGeometry(10, 10, 1.2, 24, 1, false, -Math.PI / 2, Math.PI);
-    geo.rotateX(Math.PI / 2); geo.translate(W(x), hF - 12, Z(yF)); geo.userData.planar = true;
-    addWorld(awn, geo);
-  }
-  for (const x of [182.5, 497.5]) add(awnPost, new THREE.CylinderGeometry(2.5, 2.5, 243.5, 16), W(x), 1.5 + 243.5 / 2, Z(3));
-}
-
-// US street-sign pole rising from the front end of the back wall
-const sPole = el('signPole', 'עמוד תמרורים', SP, 'Ø6 · ג׳ 110–265', { optional: true, defFinish: 'base' });
-const sRound = el('signRound', 'תמרור עגול', SP, 'Ø45', { optional: true, defFinish: 'red' });
-const sBlades = el('signBlades', 'שלטי רחוב (חצים)', SP, '70 × 16', { optional: true, defFinish: 'green' });
-{
-  const px = 20, py = 236;
-  add(sPole, new THREE.CylinderGeometry(3, 3, 155, 20), W(px), 110 + 77.5, Z(py));
-  add(sPole, new THREE.SphereGeometry(3.6, 16, 10), W(px), 265, Z(py));
-  add(sRound, new THREE.CylinderGeometry(22.5, 22.5, 1.5, 48), W(px), 236, Z(py) + 4, [Math.PI / 2, 0, 0]);
-  const blade = () => {
-    const sh = new THREE.Shape();
-    sh.moveTo(0, -8); sh.lineTo(62, -8); sh.lineTo(70, 0); sh.lineTo(62, 8); sh.lineTo(0, 8); sh.closePath();
-    return new THREE.ExtrudeGeometry(sh, { depth: 1.5, bevelEnabled: false }).translate(0, 0, -0.75);
-  };
-  add(sBlades, blade(), W(px) + 3, 200, Z(py));                       // points into the booth (→)
-  add(sBlades, blade(), W(px), 182, Z(py) - 3, [0, Math.PI / 2, 0]);  // points to the back (↑)
-}
-
-// Traffic light standing on the counter's back corner, facing the mall
-const tlBody = el('tlBody', 'רמזור · גוף', SP, '20 × 18 × 58', { optional: true, defFinish: 'yellow' });
-const tlR = el('tlRed', 'רמזור · אור עליון', SP, 'Ø12', { optional: true, defFinish: 'red' });
-const tlY = el('tlYellow', 'רמזור · אור אמצעי', SP, 'Ø12', { optional: true, defFinish: 'yellow' });
-const tlG = el('tlGreen', 'רמזור · אור תחתון', SP, 'Ø12', { optional: true, defFinish: 'green' });
-{
-  const cx = 196, cy = 142;
-  box(tlBody, cx - 10, cx + 10, cy - 9, cy + 9, 90, 148);
-  for (const [e, h] of [[tlR, 136], [tlY, 119], [tlG, 102]]) {
-    add(e, new THREE.CylinderGeometry(6, 6, 2, 32), W(cx), h, Z(cy + 9) + 1, [Math.PI / 2, 0, 0]);
-    add(tlBody, new THREE.CylinderGeometry(7.5, 7.5, 6, 32, 1, true, -Math.PI / 2, Math.PI), W(cx), h + 1, Z(cy + 9) + 3, [Math.PI / 2, 0, 0]);
-  }
-}
-
-// Traffic cones flanking the entrance path
-const cBody = el('coneBody', 'קונוסים · גוף', SP, 'Ø18 · ג׳ 45', { optional: true, defFinish: 'orange' });
-const cBand = el('coneBands', 'קונוסים · פסים', SP, '2 טבעות', { optional: true, defFinish: 'white' });
-const cBase = el('coneBase', 'קונוסים · בסיס', SP, '26 × 26', { optional: true, defFinish: 'black' });
-for (const [x, y] of [[226, 146], [306, 182]]) {
-  const X = W(x), Zc = Z(y);
-  add(cBase, new THREE.BoxGeometry(26, 2.5, 26), X, 2.75, Zc);
-  add(cBody, new THREE.CylinderGeometry(1.8, 9, 42, 32), X, 4 + 21, Zc);
-  for (const h of [16, 28]) { const r = 9 - (h - 4) / 42 * 7.2; add(cBand, new THREE.CylinderGeometry(r - 0.6, r + 0.2, 5, 32, 1, true), X, h, Zc); }
-}
-
-// Painted crosswalk at the entrance between counter and craft table
-const xwalk = el('crosswalk', 'מעבר חצייה בכניסה', SP, '4 פסים 10 × 85', { optional: true, defFinish: 'white' });
-for (const x of [220, 240, 260, 280]) box(xwalk, x, x + 10, 162, 247, 1.5, 1.8);
-
 // ---------- selection outline ----------
 const selBox = new THREE.Box3Helper(new THREE.Box3(), 0x2f6fb3);
 selBox.visible = false; scene.add(selBox);
@@ -506,7 +412,7 @@ function select(id, scroll) {
 
 // ---------- state ----------
 function load() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; } }
-function snap() { const o = {}; for (const e of elements) o[e.id] = e.optional ? { f: e.finish, o: e.mat.opacity, v: e.visible } : { f: e.finish, o: e.mat.opacity }; return o; }
+function snap() { const o = {}; for (const e of elements) o[e.id] = { f: e.finish, o: e.mat.opacity }; return o; }
 function persist(o) { try { localStorage.setItem(STORE, JSON.stringify(o)); } catch {} }
 // Undo/redo: every committed change pushes a snapshot
 const hist = []; let hi = -1; let onChange = null;
@@ -517,7 +423,7 @@ function save() {
   persist(o); updHist(); onChange && onChange();
 }
 function applySnap(o) {
-  for (const e of elements) { const s = o[e.id]; if (!s) continue; setFinish(e, s.f, false); if (e.opacity) setOpacity(e, s.o, false); if (e.optional) setVisible(e, s.v !== false, false); }
+  for (const e of elements) { const s = o[e.id]; if (!s) continue; setFinish(e, s.f, false); if (e.opacity) setOpacity(e, s.o, false); }
   persist(o); updHist(); if (selected) select(selected); onChange && onChange();
 }
 function undo() { if (hi > 0) { hi--; applySnap(hist[hi]); } }
@@ -531,13 +437,6 @@ function setFinish(e, k, persist = true) {
   e.finish = k; e.mat.color.set(f.color); e.mat.map = f.tex || null;
   e.mat.roughness = f.roughness ?? 0.65; e.mat.needsUpdate = true;
   document.querySelectorAll(`.row[data-id="${e.id}"] .sw`).forEach(b => { const on = b.dataset.f === k; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-  if (persist) save();
-}
-function setVisible(e, v, persist = true) {
-  e.visible = v; e.g.visible = v;
-  const cb = document.querySelector(`.row[data-id="${e.id}"] .vis input`); if (cb) cb.checked = v;
-  document.querySelector(`.row[data-id="${e.id}"]`)?.classList.toggle('off', !v);
-  if (!v && selected === e.id) select(null);
   if (persist) save();
 }
 function setOpacity(e, v, persist = true) {
@@ -556,20 +455,19 @@ for (const e of elements) {
   row.className = 'row'; row.dataset.id = e.id;
   const sws = Object.keys(FINISHES).map(k => `<button class="sw" data-f="${k}" style="${swatchCss(k)}" title="${FINISHES[k].he}" aria-label="${e.he}: ${FINISHES[k].he}" aria-pressed="false"></button>`).join('');
   row.innerHTML = `
-    <div class="nrow"><div class="name"><b>${e.he}</b><span>${e.dims}</span></div>${e.optional ? `<label class="vis"><input type="checkbox" id="v-${e.id}" checked> מוצג</label>` : ''}</div>
+    <div class="name"><b>${e.he}</b><span>${e.dims}</span></div>
     <div class="sws">${sws}</div>
     ${e.opacity ? `<div class="op"><span>שקיפות</span><input type="range" id="o-${e.id}" min="0.15" max="1" step="0.05" value="1" aria-label="אטימות ${e.he}"></div>` : ''}`;
   list.appendChild(row);
   row.querySelectorAll('.sw').forEach(b => b.addEventListener('click', () => { setFinish(e, b.dataset.f); select(e.id); }));
   row.querySelector('.name').addEventListener('click', () => select(e.id));
-  row.querySelector('.vis input')?.addEventListener('change', ev => setVisible(e, ev.target.checked));
   row.querySelector('.op input')?.addEventListener('input', ev => setOpacity(e, +ev.target.value, false));
   row.querySelector('.op input')?.addEventListener('change', () => save());
 }
 
-for (const e of elements) { setFinish(e, e.defFin, false); if (e.opacity) setOpacity(e, e.defOp, false); }
+for (const e of elements) { setFinish(e, DEFAULT, false); if (e.opacity) setOpacity(e, e.defOp, false); }
 const saved = load();
-for (const e of elements) { const s = saved[e.id]; if (s) { if (s.f) setFinish(e, s.f, false); if (s.o != null && e.opacity) setOpacity(e, s.o, false); if (e.optional && s.v === false) setVisible(e, false, false); } }
+for (const e of elements) { const s = saved[e.id]; if (s) { if (s.f) setFinish(e, s.f, false); if (s.o != null && e.opacity) setOpacity(e, s.o, false); } }
 save();
 document.getElementById('undo').addEventListener('click', undo);
 document.getElementById('redo').addEventListener('click', redo);
@@ -584,11 +482,11 @@ const allSw = document.getElementById('allSw');
 allSw.innerHTML = Object.keys(FINISHES).map(k => `<button class="sw" data-f="${k}" style="${swatchCss(k)}" title="${FINISHES[k].he}" aria-label="הכל: ${FINISHES[k].he}"></button>`).join('');
 allSw.querySelectorAll('.sw').forEach(b => b.addEventListener('click', () => { for (const e of elements) setFinish(e, b.dataset.f, false); save(); toast('הוחל על כל האלמנטים: ' + FINISHES[b.dataset.f].he); }));
 document.getElementById('reset').addEventListener('click', () => {
-  for (const e of elements) { setFinish(e, e.defFin, false); if (e.opacity) setOpacity(e, e.defOp, false); if (e.optional) setVisible(e, true, false); }
+  for (const e of elements) { setFinish(e, DEFAULT, false); if (e.opacity) setOpacity(e, e.defOp, false); }
   save(); toast('הגימורים אופסו');
 });
 document.getElementById('copy').addEventListener('click', () => {
-  const txt = elements.filter(e => e.visible).map(e => `${e.he}: ${FINISHES[e.finish].he}`).join('\n');
+  const txt = elements.map(e => `${e.he}: ${FINISHES[e.finish].he}`).join('\n');
   const out = document.getElementById('out');
   navigator.clipboard.writeText(txt).then(() => toast('הרשימה הועתקה')).catch(() => {
     out.hidden = false; out.value = txt; out.select(); toast('סמנו והעתיקו את הטקסט');
@@ -665,9 +563,8 @@ async function delVer(v) {
 function loadVer(v) {
   for (const e of elements) {
     const s = v.finishes?.[e.id];
-    setFinish(e, s && FINISHES[s.f] ? s.f : (s ? 'base' : e.defFin), false);
+    setFinish(e, s && FINISHES[s.f] ? s.f : 'base', false);
     if (e.opacity) setOpacity(e, s?.o ?? e.defOp, false);
-    if (e.optional) setVisible(e, s?.v !== false, false);
   }
   activeVer = v.id; save(); renderVers(); toast('נטען: ' + (v.name || ''));
 }
