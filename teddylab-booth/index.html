@@ -165,6 +165,10 @@ const checkerCanvas = canvasTex(256, (g, n) => {
   g.fillStyle = '#f4f4f2'; g.fillRect(0, 0, n, n);
   g.fillStyle = '#141414'; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
 });
+const skyCheckerCanvas = canvasTex(256, (g, n) => {
+  g.fillStyle = '#f7fafc'; g.fillRect(0, 0, n, n);
+  g.fillStyle = '#8db4d0'; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
+});
 const parquetCanvas = canvasTex(512, (g, n) => {
   // 4 planks of 15cm across a 60cm tile, staggered butt joints, light oak
   const tones = ['#b98a5a', '#c49766', '#ad7f50', '#c9a172', '#b58654', '#bf9161'];
@@ -221,9 +225,10 @@ const FINISHES = {
   pink:    { he: 'ורוד בהיר',         color: '#f2b3bd' },
   parquet: { he: 'פרקט',              color: '#ffffff', tex: makeTex(parquetCanvas, 60), roughness: 0.55, swatch: parquetCanvas },
   concrete:{ he: 'בטון',             color: '#ffffff', tex: makeTex(concreteCanvas, 120), roughness: 0.85, swatch: concreteCanvas },
+  skyChecker: { he: 'משבצות תכלת לבן', color: '#ffffff', tex: makeTex(skyCheckerCanvas, 30), roughness: 0.4, swatch: skyCheckerCanvas },
   checker: { he: 'משבצות שחור לבן',   color: '#ffffff', tex: makeTex(checkerCanvas, 30), roughness: 0.4, swatch: checkerCanvas },
 };
-const swatchCss = (k) => FINISHES[k].swatch ? `background-image:url(${FINISHES[k].swatch.toDataURL()});background-size:${k === 'checker' ? '60%' : '100%'}` : `background:${FINISHES[k].color}`;
+const swatchCss = (k) => FINISHES[k].swatch ? `background-image:url(${FINISHES[k].swatch.toDataURL()});background-size:${/checker/i.test(k) ? '60%' : '100%'}` : `background:${FINISHES[k].color}`;
 
 // UVs in centimetres so textures keep real-world scale on every part
 function cmUV(geo) {
