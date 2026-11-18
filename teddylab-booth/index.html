@@ -169,9 +169,8 @@ const skyCheckerCanvas = canvasTex(256, (g, n) => {
   g.fillStyle = '#f7fafc'; g.fillRect(0, 0, n, n);
   g.fillStyle = '#8db4d0'; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
 });
-const parquetCanvas = canvasTex(512, (g, n) => {
-  // 4 planks of 15cm across a 60cm tile, staggered butt joints, light oak
-  const tones = ['#b98a5a', '#c49766', '#ad7f50', '#c9a172', '#b58654', '#bf9161'];
+const woodCanvas = (tones) => canvasTex(512, (g, n) => {
+  // 4 planks of 15cm across a 60cm tile, staggered butt joints
   let k = 0; const pw = n / 4;
   for (let i = 0; i < 4; i++) {
     const off = [0, 0.5, 0.25, 0.75][i] * n;
@@ -209,6 +208,8 @@ const concreteCanvas = canvasTex(512, (g, n) => {
     wrap((dx, dy) => { g.beginPath(); g.arc(x + dx, y + dy, r, 0, Math.PI * 2); g.fill(); });
   }
 });
+const parquetCanvas = woodCanvas(['#b98a5a', '#c49766', '#ad7f50', '#c9a172', '#b58654', '#bf9161']);
+const darkWoodCanvas = woodCanvas(['#4a2f1e', '#563724', '#3f2819', '#5e3d27', '#4d321f', '#432a1b']);
 function makeTex(cv, periodCm) {
   const t = new THREE.CanvasTexture(cv);
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
@@ -224,6 +225,7 @@ const FINISHES = {
   sky:     { he: 'תכלת',              color: '#8db4d0' },
   pink:    { he: 'ורוד בהיר',         color: '#f2b3bd' },
   parquet: { he: 'פרקט',              color: '#ffffff', tex: makeTex(parquetCanvas, 60), roughness: 0.55, swatch: parquetCanvas },
+  darkWood:{ he: 'עץ כהה',           color: '#ffffff', tex: makeTex(darkWoodCanvas, 60), roughness: 0.5, swatch: darkWoodCanvas },
   concrete:{ he: 'בטון',             color: '#ffffff', tex: makeTex(concreteCanvas, 120), roughness: 0.85, swatch: concreteCanvas },
   skyChecker: { he: 'משבצות תכלת לבן', color: '#ffffff', tex: makeTex(skyCheckerCanvas, 30), roughness: 0.4, swatch: skyCheckerCanvas },
   checker: { he: 'משבצות שחור לבן',   color: '#ffffff', tex: makeTex(checkerCanvas, 30), roughness: 0.4, swatch: checkerCanvas },
