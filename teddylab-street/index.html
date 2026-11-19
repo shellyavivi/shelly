@@ -262,6 +262,19 @@ const pinkRedCheckerCanvas = canvasTex(256, (g, n) => {
   g.fillStyle = '#f4a6d6'; g.fillRect(0, 0, n, n);
   g.fillStyle = '#e01e1c'; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
 });
+const twoChecker = (a, b) => canvasTex(256, (g, n) => {
+  g.fillStyle = b; g.fillRect(0, 0, n, n);
+  g.fillStyle = a; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
+});
+const yellowPinkCheckerCanvas = twoChecker('#f5b303', '#f4a6d6');
+const yellowSkyCheckerCanvas = twoChecker('#f5b303', '#7abbeb');
+const pinkSkyCheckerCanvas = twoChecker('#f4a6d6', '#7abbeb');
+const tileSkyCanvas = canvasTex(256, (g, n) => {
+  g.fillStyle = '#7abbeb'; g.fillRect(0, 0, n, n);
+  const gw = 8; g.fillStyle = '#f6f5f1'; g.fillRect(gw, gw, n - 2 * gw, n - 2 * gw);
+  const gr = g.createLinearGradient(0, 0, n, n); gr.addColorStop(0, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(0,0,0,.04)');
+  g.fillStyle = gr; g.fillRect(gw, gw, n - 2 * gw, n - 2 * gw);
+});
 const parquetCanvas = woodCanvas(['#b98a5a', '#c49766', '#ad7f50', '#c9a172', '#b58654', '#bf9161']);
 const darkWoodCanvas = woodCanvas(['#4a2f1e', '#563724', '#3f2819', '#5e3d27', '#4d321f', '#432a1b']);
 function makeTex(cv, periodCm) {
@@ -295,6 +308,10 @@ const FINISHES = {
   greenChecker: { he: 'משבצות ירוק לבן', color: '#ffffff', tex: makeTex(greenCheckerCanvas, 30), roughness: 0.4, swatch: greenCheckerCanvas },
   tileGreen: { he: 'אריחים לבנים רובה ירוקה', color: '#ffffff', tex: makeTex(tileGreenCanvas, 15), roughness: 0.25, swatch: tileGreenCanvas },
   pinkRedChecker: { he: 'משבצות ורוד אדום', color: '#ffffff', tex: makeTex(pinkRedCheckerCanvas, 30), roughness: 0.4, swatch: pinkRedCheckerCanvas },
+  yellowPinkChecker: { he: 'משבצות צהוב ורוד', color: '#ffffff', tex: makeTex(yellowPinkCheckerCanvas, 30), roughness: 0.4, swatch: yellowPinkCheckerCanvas },
+  yellowSkyChecker: { he: 'משבצות צהוב תכלת', color: '#ffffff', tex: makeTex(yellowSkyCheckerCanvas, 30), roughness: 0.4, swatch: yellowSkyCheckerCanvas },
+  pinkSkyChecker: { he: 'משבצות ורוד תכלת', color: '#ffffff', tex: makeTex(pinkSkyCheckerCanvas, 30), roughness: 0.4, swatch: pinkSkyCheckerCanvas },
+  tileSky: { he: 'אריחים לבנים רובה תכלת', color: '#ffffff', tex: makeTex(tileSkyCanvas, 15), roughness: 0.25, swatch: tileSkyCanvas },
   checker: { he: 'משבצות שחור לבן',   color: '#ffffff', tex: makeTex(checkerCanvas, 30), roughness: 0.4, swatch: checkerCanvas },
 };
 const swatchCss = (k) => FINISHES[k].swatch ? `background-image:url(${FINISHES[k].swatch.toDataURL()});background-size:${/checker|stripes|hazard|tile/i.test(k) ? '60%' : '100%'}` : `background:${FINISHES[k].color}`;
