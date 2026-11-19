@@ -61,6 +61,9 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); overfl
 .tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
 .pane { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .pane[hidden] { display: none; }
+/* finishes tab: the whole pane scrolls, so the "one finish for all" bar sits after the list instead of pinned */
+#paneFin { overflow-y: auto; }
+#paneFin > .list { flex: none; overflow: visible; }
 .vsave { padding: 12px; display: grid; gap: 8px; border-bottom: 1px solid var(--line); }
 .vsave .inrow { display: flex; gap: 6px; }
 .vsave input { flex: 1; min-width: 0; font: 14px var(--font); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
