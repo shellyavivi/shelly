@@ -260,6 +260,31 @@ const tileSkyCanvas = canvasTex(256, (g, n) => {
   const gr = g.createLinearGradient(0, 0, n, n); gr.addColorStop(0, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(0,0,0,.04)');
   g.fillStyle = gr; g.fillRect(gw, gw, n - 2 * gw, n - 2 * gw);
 });
+const sidewalkCanvas = canvasTex(512, (g, n) => {
+  // 2×2 poured sidewalk slabs (60cm each), broom-finish grain, dark saw-cut joints
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const h = n / 2, tones = ['#b9b8b3', '#b3b2ad', '#bdbcb7', '#b6b4ae'];
+  for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) { g.fillStyle = tones[i * 2 + j]; g.fillRect(i * h, j * h, h, h); }
+  const img = g.getImageData(0, 0, n, n), d = img.data;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const k = (y * n + x) * 4, v = (rnd() - 0.5) * 18 + Math.sin(y * 0.9) * 2; d[k] += v; d[k + 1] += v; d[k + 2] += v; }
+  g.putImageData(img, 0, 0);
+  g.fillStyle = 'rgba(70,68,64,.75)';
+  for (const p of [0, h]) { g.fillRect(p - 2, 0, 4, n); g.fillRect(0, p - 2, n, 4); }
+  g.fillRect(n - 2, 0, 2, n); g.fillRect(0, n - 2, n, 2);
+  for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(60,58,55,${0.15 + rnd() * 0.2})`; g.beginPath(); g.arc(rnd() * n, rnd() * n, 1 + rnd() * 2.5, 0, Math.PI * 2); g.fill(); }
+});
+const subwayCanvas = canvasTex(512, (g, n) => {
+  // 2×2 grey terrazzo platform tiles (30cm each) with speckles and darker grout
+  let seed = 23; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  g.fillStyle = '#5c5f63'; g.fillRect(0, 0, n, n);
+  const h = n / 2, gw = 4, tones = ['#9a9da1', '#94979b', '#9d9fa2', '#96999d'];
+  for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) { g.fillStyle = tones[i * 2 + j]; g.fillRect(i * h + gw, j * h + gw, h - 2 * gw, h - 2 * gw); }
+  for (let i = 0; i < 2600; i++) {
+    const x = rnd() * n, y = rnd() * n; if (x % h < gw || x % h > h - gw || y % h < gw || y % h > h - gw) continue;
+    const c = rnd(); g.fillStyle = c < 0.45 ? 'rgba(235,235,232,.8)' : c < 0.85 ? 'rgba(55,57,60,.75)' : 'rgba(180,160,130,.7)';
+    g.fillRect(x, y, 1 + rnd() * 2.5, 1 + rnd() * 2.5);
+  }
+});
 const parquetCanvas = woodCanvas(['#b98a5a', '#c49766', '#ad7f50', '#c9a172', '#b58654', '#bf9161']);
 const darkWoodCanvas = woodCanvas(['#4a2f1e', '#563724', '#3f2819', '#5e3d27', '#4d321f', '#432a1b']);
 function makeTex(cv, periodCm) {
@@ -292,6 +317,8 @@ const FINISHES = {
   pinkSkyChecker: { he: 'משבצות ורוד תכלת', color: '#ffffff', tex: makeTex(pinkSkyCheckerCanvas, 30), roughness: 0.4, swatch: pinkSkyCheckerCanvas },
   tileSky: { he: 'אריחים לבנים רובה תכלת', color: '#ffffff', tex: makeTex(tileSkyCanvas, 15), roughness: 0.25, swatch: tileSkyCanvas },
   blueSkyChecker: { he: 'משבצות כחול תכלת', color: '#ffffff', tex: makeTex(blueSkyCheckerCanvas, 30), roughness: 0.4, swatch: blueSkyCheckerCanvas },
+  sidewalk: { he: 'מדרכה אפורה', color: '#ffffff', tex: makeTex(sidewalkCanvas, 120), roughness: 0.9, swatch: sidewalkCanvas },
+  subway: { he: 'רצפת סאבווי', color: '#ffffff', tex: makeTex(subwayCanvas, 60), roughness: 0.55, swatch: subwayCanvas },
   checker: { he: 'משבצות שחור לבן',   color: '#ffffff', tex: makeTex(checkerCanvas, 30), roughness: 0.4, swatch: checkerCanvas },
 };
 const swatchCss = (k) => FINISHES[k].swatch ? `background-image:url(${FINISHES[k].swatch.toDataURL()});background-size:${/checker|tile/i.test(k) ? '60%' : '100%'}` : `background:${FINISHES[k].color}`;
@@ -354,7 +381,7 @@ const byId = {};
 function el(id, he, group, dims, opts = {}) {
   const mat = new THREE.MeshStandardMaterial({ color: FINISHES.base.color, roughness: 0.65, metalness: 0, side: opts.double ? THREE.DoubleSide : THREE.FrontSide });
   const g = new THREE.Group(); g.userData.elId = id; scene.add(g);
-  const e = { id, he, group, dims, mat, g, opacity: opts.opacity || false, defOp: opts.defOp ?? 1, finish: DEFAULT };
+  const e = { id, he, group, dims, mat, g, opacity: opts.opacity || false, defOp: opts.defOp ?? 1, defFin: opts.defFinish || DEFAULT, finish: DEFAULT };
   elements.push(e); byId[id] = e; return e;
 }
 function add(e, geo, x, y, z, rot) {
@@ -372,6 +399,11 @@ function box(e, x0, x1, y0, y1, h0, h1) {
 // Floor
 const floor = el('floor', 'רצפת המתחם', 'מבנה', '500 × 250');
 box(floor, 0, 500, 0, 250, 0, 1.5);
+
+// Parking-style painted line around the edge of the booth floor (10 cm)
+const parkLine = el('parkLine', 'פס חניה מסביב', 'מבנה', 'פס 10 ס״מ בהיקף הרצפה', { defFinish: 'yellow' });
+box(parkLine, 0, 500, 240, 250, 1.5, 1.9); box(parkLine, 0, 500, 0, 10, 1.5, 1.9);
+box(parkLine, 0, 10, 10, 240, 1.5, 1.9); box(parkLine, 490, 500, 10, 240, 1.5, 1.9);
 
 // Back wall 240×40, h110
 const wall = el('wall', 'קיר אחורי', 'מבנה', '40 × 240 · ג׳ 110');
@@ -524,7 +556,7 @@ for (const e of elements) {
   row.querySelector('.op input')?.addEventListener('change', () => save());
 }
 
-for (const e of elements) { setFinish(e, DEFAULT, false); if (e.opacity) setOpacity(e, e.defOp, false); }
+for (const e of elements) { setFinish(e, e.defFin, false); if (e.opacity) setOpacity(e, e.defOp, false); }
 const saved = load();
 for (const e of elements) { const s = saved[e.id]; if (s) { if (s.f) setFinish(e, s.f, false); if (s.o != null && e.opacity) setOpacity(e, s.o, false); } }
 save();
@@ -541,7 +573,7 @@ const allSw = document.getElementById('allSw');
 allSw.innerHTML = Object.keys(FINISHES).map(k => `<button class="sw" data-f="${k}" style="${swatchCss(k)}" title="${FINISHES[k].he}" aria-label="הכל: ${FINISHES[k].he}"></button>`).join('');
 allSw.querySelectorAll('.sw').forEach(b => b.addEventListener('click', () => { for (const e of elements) setFinish(e, b.dataset.f, false); save(); toast('הוחל על כל האלמנטים: ' + FINISHES[b.dataset.f].he); }));
 document.getElementById('reset').addEventListener('click', () => {
-  for (const e of elements) { setFinish(e, DEFAULT, false); if (e.opacity) setOpacity(e, e.defOp, false); }
+  for (const e of elements) { setFinish(e, e.defFin, false); if (e.opacity) setOpacity(e, e.defOp, false); }
   save(); toast('הגימורים אופסו');
 });
 document.getElementById('copy').addEventListener('click', () => {
@@ -622,7 +654,7 @@ async function delVer(v) {
 function loadVer(v) {
   for (const e of elements) {
     const s = v.finishes?.[e.id];
-    setFinish(e, s && FINISHES[s.f] ? s.f : 'base', false);
+    setFinish(e, s && FINISHES[s.f] ? s.f : (s ? 'base' : e.defFin), false);
     if (e.opacity) setOpacity(e, s?.o ?? e.defOp, false);
   }
   activeVer = v.id; save(); renderVers(); toast('נטען: ' + (v.name || ''));
