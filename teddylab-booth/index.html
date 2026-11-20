@@ -253,6 +253,7 @@ const twoChecker = (a, b) => canvasTex(256, (g, n) => {
 const yellowPinkCheckerCanvas = twoChecker('#f5b303', '#f4a6d6');
 const yellowSkyCheckerCanvas = twoChecker('#f5b303', '#7abbeb');
 const pinkSkyCheckerCanvas = twoChecker('#f4a6d6', '#7abbeb');
+const blueSkyCheckerCanvas = twoChecker('#0a56ac', '#7abbeb');
 const tileSkyCanvas = canvasTex(256, (g, n) => {
   g.fillStyle = '#7abbeb'; g.fillRect(0, 0, n, n);
   const gw = 8; g.fillStyle = '#f6f5f1'; g.fillRect(gw, gw, n - 2 * gw, n - 2 * gw);
@@ -290,6 +291,7 @@ const FINISHES = {
   yellowSkyChecker: { he: 'משבצות צהוב תכלת', color: '#ffffff', tex: makeTex(yellowSkyCheckerCanvas, 30), roughness: 0.4, swatch: yellowSkyCheckerCanvas },
   pinkSkyChecker: { he: 'משבצות ורוד תכלת', color: '#ffffff', tex: makeTex(pinkSkyCheckerCanvas, 30), roughness: 0.4, swatch: pinkSkyCheckerCanvas },
   tileSky: { he: 'אריחים לבנים רובה תכלת', color: '#ffffff', tex: makeTex(tileSkyCanvas, 15), roughness: 0.25, swatch: tileSkyCanvas },
+  blueSkyChecker: { he: 'משבצות כחול תכלת', color: '#ffffff', tex: makeTex(blueSkyCheckerCanvas, 30), roughness: 0.4, swatch: blueSkyCheckerCanvas },
   checker: { he: 'משבצות שחור לבן',   color: '#ffffff', tex: makeTex(checkerCanvas, 30), roughness: 0.4, swatch: checkerCanvas },
 };
 const swatchCss = (k) => FINISHES[k].swatch ? `background-image:url(${FINISHES[k].swatch.toDataURL()});background-size:${/checker|tile/i.test(k) ? '60%' : '100%'}` : `background:${FINISHES[k].color}`;
