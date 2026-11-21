@@ -250,8 +250,8 @@ const twoChecker = (a, b) => canvasTex(256, (g, n) => {
   g.fillStyle = b; g.fillRect(0, 0, n, n);
   g.fillStyle = a; g.fillRect(0, 0, n / 2, n / 2); g.fillRect(n / 2, n / 2, n / 2, n / 2);
 });
-const yellowPinkCheckerCanvas = twoChecker('#f8e27f', '#f4a6d6');
-const yellowSkyCheckerCanvas = twoChecker('#f8e27f', '#7abbeb');
+const yellowPinkCheckerCanvas = twoChecker('#f5b303', '#f4a6d6');
+const yellowSkyCheckerCanvas = twoChecker('#f5b303', '#7abbeb');
 const pinkSkyCheckerCanvas = twoChecker('#f4a6d6', '#7abbeb');
 const blueSkyCheckerCanvas = twoChecker('#0a56ac', '#7abbeb');
 const tileSkyCanvas = canvasTex(256, (g, n) => {
@@ -296,7 +296,7 @@ const FINISHES = {
   base:    { he: 'בסיס (ללא)',        color: '#d4d2ce' },
   black:   { he: 'שחור',              color: '#1c1c1d', roughness: 0.5 },
   red:     { he: 'אדום תמרור',        color: '#e01e1c' },
-  yellow:  { he: 'צהוב בננה',         color: '#f8e27f' },
+  yellow:  { he: 'צהוב תמרור',        color: '#f5b303' },
   green:   { he: 'ירוק תמרור',        color: '#0a7440' },
   blue:    { he: 'כחול תמרור',        color: '#0a56ac' },
   sky:     { he: 'תכלת',              color: '#7abbeb' },
